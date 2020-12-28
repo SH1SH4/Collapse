@@ -1,12 +1,36 @@
 import pygame
+import os
+import sys
+import pytmx
 
 pygame.init()
 
 pygame.display.set_caption("Start")
-size = width, height = 800, 500
+size = width, height = 1920, 1020
 screen = pygame.display.set_mode(size)
 
 color = "white"
+
+
+class Map:
+    def __init__(self, filename, free_tile):
+        self.map = pytmx.load_pygame(f"maps/{filename}")
+        self.height = self.map.height
+        self.width = self.map.width
+        self.tile_size = self.map.tilewidth
+        self.free_tile = free_tile
+
+    def render(self, screen):
+        for y in range(self.height):
+            for x in range(self.width):
+                image = self.map.get_tile_image(x, y, 0)
+                screen.blit(image, (x * self.tile_size, y * self.tile_size))
+
+    def get_tile_id(self, position):
+        return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
+
+    def is_free(self, position):
+        return self.get_tile_id(position) in self.free_tile
 
 
 class Button:
@@ -24,6 +48,7 @@ class Button:
             if click[0] == 1:
                 screen.blit(self.active, (x, y))
                 if name == "play":
+                    start_game()
                     print("Ok")
                 if name == "new_game":
                     print("New game")
@@ -34,19 +59,65 @@ class Button:
             screen.blit(self.inactive, (x, y))
 
 
+class Hero:
+    def __init__(self, position):
+        self.x, self.y = position
+
+    def get_position(self):
+        return self.x, self.y
+
+    def set_position(self, position):
+        self.x, self.y = position
+
+    def render(self, screen):
+        pygame.draw.circle(screen, (255, 0, 0), (96, 96), 32 // 2)
+
+
+class Game:
+    def __init__(self, map, hero):
+        self.map = map
+        self.hero = hero
+
+    def render(self, screen):
+        self.map.render(screen)
+        self.hero.render(screen)
+
+    def update_hero(self):
+        next_x, next_y = self.hero.get_position()
+        if pygame.key.get_pressed()[pygame.K_LEFT]:
+            next_x -= 1
+        if pygame.key.get_pressed()[pygame.K_RIGHT]:
+            next_x += 1
+        if pygame.key.get_pressed()[pygame.K_UP]:
+            next_y -= 1
+        if pygame.key.get_pressed()[pygame.K_DOWN]:
+            next_y += 1
+        if self.map.is_free((next_x, next_y)):
+            self.hero.set_position((next_x, next_y))
+
+
+def load_image(name, colorkey=None):
+    fullname = os.path.join('data', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    return image
+
+
 def play_but():
-    play = Button(200, 50, "data/play_inactive.png", "data/play_active.png")
-    play.draw(300, 200, "play")
+    play = Button(400, 100, "data/play_inactive.png", "data/play_active.png")
+    play.draw(760, 400, "play")
 
 
 def newgame_but():
-    new_game = Button(200, 50, "data/test_inacrive.png", "data/test_acrive_black.png")
-    new_game.draw(300, 270, "new_game")
+    new_game = Button(400, 100, "data/test_inacrive.png", "data/test_acrive_black.png")
+    new_game.draw(760, 550, "new_game")
 
 
 def exit_but():
-    exit_b = Button(200, 50, "data/exit_inacrive.png", "data/exit_acrive.png")
-    exit_b.draw(300, 340, "exit")
+    exit_b = Button(400, 100, "data/exit_inacrive.png", "data/exit_acrive.png")
+    exit_b.draw(760, 700, "exit")
 
 
 def start_screen():
@@ -65,5 +136,24 @@ def start_screen():
                 quit()
         pygame.display.update()
 
+
+def start_game():
+    running = True
+    world = Map("poligon.tmx", [30])
+    hero = Hero((5, 5))
+    game = Game(world, hero)
+
+    clock = pygame.time.Clock()
+    fps = 60
+    clock = pygame.time.Clock()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        pygame.display.flip()
+        clock.tick(fps)
+        game.render(screen)
+        game.update_hero()
+    pygame.quit()
 
 start_screen()
