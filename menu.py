@@ -70,7 +70,8 @@ class Hero:
         self.x, self.y = position
 
     def render(self, screen):
-        pygame.draw.circle(screen, (255, 0, 0), (96, 96), 32 // 2)
+        center = self.x * 32 + 16, self.y * 32 + 16
+        pygame.draw.circle(screen, (255, 0, 0), center, 32 // 2)
 
 
 class Game:
@@ -94,6 +95,23 @@ class Game:
             next_y += 1
         if self.map.is_free((next_x, next_y)):
             self.hero.set_position((next_x, next_y))
+
+
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
 
 
 def load_image(name, colorkey=None):
@@ -138,8 +156,10 @@ def start_screen():
 
 
 def start_game():
+    camera = Camera()
     running = True
-    world = Map("poligon.tmx", [30])
+    screen.fill((0, 0, 0))
+    world = Map("poligon2.0.tmx", [30])
     hero = Hero((5, 5))
     game = Game(world, hero)
 
