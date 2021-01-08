@@ -19,6 +19,8 @@ map_layer = pyscroll.BufferedRenderer(map_data, screen_size, True)
 group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
 hero = pygame.sprite.Group()
+
+
 class Map:
     def __init__(self, filename, free_tile):
         self.map = pytmx.load_pygame(f"maps/{filename}")
@@ -30,9 +32,8 @@ class Map:
     def render(self):
         for y in range(self.height):
             for x in range(self.width):
-                image = self.map.get_tile_image(x, y, 0)
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
-                    Obstacles(image, x * self.tile_size, y * self.tile_size)
+                    Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size, y * self.tile_size)
 
     def get_tile_id(self, position):
         return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
@@ -43,11 +44,11 @@ class Map:
 
 class Obstacles(pygame.sprite.Sprite):
     def __init__(self, img, x, y):
-        super().__init__(group)
+        super().__init__(obstacles)
         self.image = img
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
-        self.add(obstacles)
+        # self.add(obstacles)
         self.mask = pygame.mask.from_surface(self.image)
 
 
@@ -78,31 +79,50 @@ class Button:
 
 
 class Hero(pygame.sprite.Sprite):
-    def __init__(self, position, group):
+    def __init__(self, position, sheet, columns, rows, x, y):
         pygame.sprite.Sprite.__init__(self, group)
 
-        self.image = pygame.Surface((32, 32))
-        self.image.fill((255, 255, 255))
-        self.rect = self.image.get_rect()
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
         self.rect.x, self.rect.y = position
+        self.delay = 0
         self.add(hero)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
+    def animation(self):
+        if self.delay % 5 == 0:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
+        self.delay += 1
 
     def update(self, world, delta_time):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
             self.rect.x -= 5
+            self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
                 self.rect.x += 5
         if key[pygame.K_RIGHT]:
             self.rect.x += 5
+            self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
                 self.rect.x -= 5
         if key[pygame.K_UP]:
             self.rect.y -= 5
+            self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
                 self.rect.y += 5
         if key[pygame.K_DOWN]:
             self.rect.y += 5
+            self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
                 self.rect.y -= 5
 
@@ -151,8 +171,8 @@ def start_screen():
 def start_game():
     running = True
     screen.fill((0, 0, 0))
-    world = Map("poligon2.0.tmx", [30])
-    hero = Hero((50, 50), group)
+    world = Map("poligon2.0.tmx", [30, 15])
+    hero = Hero((50, 50), load_image("llama (1).png"), 3, 2, 50, 50)
     # game = Game(world, hero)
     world.render()
     clock = pygame.time.Clock()
@@ -163,7 +183,7 @@ def start_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
+        obstacles.update()
         group.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
