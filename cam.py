@@ -1,6 +1,7 @@
 import pygame
 import os
 import sys
+from random import randint
 import pytmx
 import pyscroll
 from pytmx.util_pygame import load_pygame
@@ -21,6 +22,7 @@ group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
 hero = pygame.sprite.Group()
 SPEED_HERO = 5
+enemy = pygame.sprite.Group()
 
 
 class Map:
@@ -31,11 +33,37 @@ class Map:
         self.tile_size = self.map.tilewidth
         self.free_tile = free_tile
 
+    def find_path(self, start, target):
+        INF = 1000
+        x, y = start
+        distance = [[INF] * self.width for _ in range(self.height)]
+        distance[y][x] = 0
+        prev = [[None] * self.width for _ in range(self.height)]
+        queue = [(x, y)]
+        while queue:
+            x. y = queue.pop(0)
+            for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
+                next_x, next_y = x + dx, x + dy
+                if 0 <= next_x < self.width and 0 < next_y < self.height and self.is_free((next_x, next_y)) and distance[next_y][next_x] == INF:
+                    distance[next_y][next_x] = distance[y][x] + 1
+                    prev[next_y][next_x] = (x, y)
+                    queue.append(next_x, next_y)
+        x, y = target
+        if distance[y][x] == INF or start == target:
+            return start
+        while prev[y][x] != start:
+            x, y = prev[y][x]
+        return x, y
+
     def render(self):
         for y in range(self.height):
             for x in range(self.width):
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size, y * self.tile_size)
+        for i in range(100):
+            x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
+            if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
+                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2)
 
     def get_tile_id(self, position):
         return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
@@ -92,7 +120,9 @@ class Hero(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = position
         self.delay = 0
         self.add(hero)
-        self.speed = 5
+
+    def get_position(self):
+        return self.rect.x, self.rect.y
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
@@ -168,6 +198,33 @@ def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text
     font_type = pygame.font.Font(font_type, font_size)
     message = font_type.render(text, True, font_color)
     screen.blit(message, (x, y))
+                self.rect.y -= self.speed
+
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, position, sheet, columns, rows):
+        pygame.sprite.Sprite.__init__(self, group)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect.x, self.rect.y = position
+        self.delay = 0
+        self.add(enemy)
+
+    def get_position(self):
+        return self.rect.x, self.rect.y
+
+    def update(self, world, delta_time):
+        next_position = world.find_path((self.rect.x, self.rect.y), hero.get_position)
+        self.rect.x, self.rect.y = next_position
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
 
 
 def load_image(name, colorkey=None):
@@ -243,7 +300,8 @@ def start_game():
     running = True
     screen.fill((0, 0, 0))
     world = Map("poligon2.0.tmx", [30, 15])
-    hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
+    hero = Hero((50, 50), load_image("llama (1).png"), 3, 2, 50, 50)
+    # game = Game(world, hero)
     world.render()
     clock = pygame.time.Clock()
     fps = 60
@@ -265,5 +323,6 @@ def start_game():
         pygame.display.flip()
 
     pygame.quit()
+
 
 start_screen()
