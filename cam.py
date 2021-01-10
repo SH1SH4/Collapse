@@ -4,6 +4,7 @@ import sys
 import pytmx
 import pyscroll
 from pytmx.util_pygame import load_pygame
+from PIL import Image
 pygame.init()
 
 pygame.display.set_caption("Start")
@@ -79,11 +80,13 @@ class Button:
 
 
 class Hero(pygame.sprite.Sprite):
-    def __init__(self, position, sheet, columns, rows, x, y):
+    def __init__(self, position, sheet, sheet_left, columns, rows):
         pygame.sprite.Sprite.__init__(self, group)
 
         self.frames = []
+        self.frames_left = []
         self.cut_sheet(sheet, columns, rows)
+        self.cut_sheet_left(sheet_left, columns, rows)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
         self.rect.x, self.rect.y = position
@@ -97,17 +100,32 @@ class Hero(pygame.sprite.Sprite):
                 frame_location = (self.rect.w * i, self.rect.h * j)
                 self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
 
+    def cut_sheet_left(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames_left.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
     def animation(self):
-        if self.delay % 5 == 0:
+        if self.delay % 10 == 0:
             self.cur_frame = (self.cur_frame + 1) % len(self.frames)
             self.image = self.frames[self.cur_frame]
         self.delay += 1
+
+    def animation_left(self):
+        if self.delay % 10 == 0:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames_left)
+            self.image = self.frames_left[self.cur_frame]
+        self.delay += 1
+    #
+    # def anim_left(self):
 
     def update(self, world, delta_time):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
             self.rect.x -= 5
-            self.animation()
+            self.animation_left()
             if pygame.sprite.spritecollideany(self, obstacles):
                 self.rect.x += 5
         if key[pygame.K_RIGHT]:
@@ -172,7 +190,7 @@ def start_game():
     running = True
     screen.fill((0, 0, 0))
     world = Map("poligon2.0.tmx", [30, 15])
-    hero = Hero((50, 50), load_image("llama (1).png"), 3, 2, 50, 50)
+    hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     # game = Game(world, hero)
     world.render()
     clock = pygame.time.Clock()
