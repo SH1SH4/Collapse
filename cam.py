@@ -4,6 +4,7 @@ import sys
 import pytmx
 import pyscroll
 from pytmx.util_pygame import load_pygame
+
 pygame.init()
 
 pygame.display.set_caption("Start")
@@ -19,7 +20,7 @@ map_layer = pyscroll.BufferedRenderer(map_data, screen_size, True)
 group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
 hero = pygame.sprite.Group()
-
+heart = pygame.sprite.Group()
 
 class Map:
     def __init__(self, filename, free_tile):
@@ -81,14 +82,15 @@ class Button:
 class Hero(pygame.sprite.Sprite):
     def __init__(self, position, sheet, columns, rows, x, y):
         pygame.sprite.Sprite.__init__(self, group)
-
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
         self.rect.x, self.rect.y = position
         self.delay = 0
+        self.hp_health = 10
         self.add(hero)
+        self.hp_hero(self.hp_health)
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
@@ -106,6 +108,8 @@ class Hero(pygame.sprite.Sprite):
     def update(self, world, delta_time):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
+            self.hp_health -= 1
+            self.hp_hero(self.hp_health)
             self.rect.x -= 5
             self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
@@ -125,6 +129,21 @@ class Hero(pygame.sprite.Sprite):
             self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
                 self.rect.y -= 5
+
+    def hp_hero(self, health):
+        self.remove(heart)
+        for i in range(1, health + 1):
+            hp = HP((pygame.transform.scale(load_image('heart.png'), (30, 30))), i)
+
+
+class HP(pygame.sprite.Sprite):
+    def __init__(self, sheet, health):
+        print(health)
+        super().__init__(heart)
+        self.image = sheet
+        self.rect = self.image.get_rect()
+        self.rect.x = 10 * (health * 3.5)
+        self.rect.y = 30
 
 
 def load_image(name, colorkey=None):
@@ -173,6 +192,7 @@ def start_game():
     screen.fill((0, 0, 0))
     world = Map("poligon2.0.tmx", [30, 15])
     hero = Hero((50, 50), load_image("llama (1).png"), 3, 2, 50, 50)
+
     # game = Game(world, hero)
     world.render()
     clock = pygame.time.Clock()
@@ -187,8 +207,10 @@ def start_game():
         group.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
+        heart.draw(screen)
         pygame.display.flip()
 
     pygame.quit()
+
 
 start_screen()
