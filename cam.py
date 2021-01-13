@@ -26,44 +26,53 @@ enemy = pygame.sprite.Group()
 
 
 class Map:
-    def __init__(self, filename, free_tile):
+    def __init__(self, filename, free_tile, hero):
         self.map = pytmx.load_pygame(f"maps/{filename}")
         self.height = self.map.height
         self.width = self.map.width
         self.tile_size = self.map.tilewidth
         self.free_tile = free_tile
+        self.hero = hero
 
     def find_path(self, start, target):
         INF = 1000
-        x, y = start
+        x = start[0] // 32
+        y = start[1] // 32
         distance = [[INF] * self.width for _ in range(self.height)]
         distance[y][x] = 0
         prev = [[None] * self.width for _ in range(self.height)]
         queue = [(x, y)]
         while queue:
-            x. y = queue.pop(0)
+            x, y = queue.pop(0)
             for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
                 next_x, next_y = x + dx, x + dy
-                if 0 <= next_x < self.width and 0 < next_y < self.height and self.is_free((next_x, next_y)) and distance[next_y][next_x] == INF:
+                print((next_x, next_y))
+                if 0 <= next_x < self.width and 0 < next_y < self.height and\
+                        self.is_free((next_x, next_y)) and\
+                        distance[next_y][next_x] == INF:
                     distance[next_y][next_x] = distance[y][x] + 1
                     prev[next_y][next_x] = (x, y)
-                    queue.append(next_x, next_y)
-        x, y = target
+                    print((next_x, next_y))
+                    queue.append((next_x, next_y))
+                    print(queue)
+
+        x = target[0] // 32
+        y = target[1] // 32
         if distance[y][x] == INF or start == target:
             return start
         while prev[y][x] != start:
             x, y = prev[y][x]
-        return x, y
+        return x * 32, y * 32
 
     def render(self):
         for y in range(self.height):
             for x in range(self.width):
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size, y * self.tile_size)
-        for i in range(100):
+        for i in range(1):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2)
+                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2, self.hero)
 
     def get_tile_id(self, position):
         return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
@@ -202,7 +211,7 @@ def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, position, sheet, columns, rows):
+    def __init__(self, position, sheet, columns, rows, hero):
         pygame.sprite.Sprite.__init__(self, group)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
@@ -210,13 +219,11 @@ class Enemy(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
         self.rect.x, self.rect.y = position
         self.delay = 0
-        self.add(enemy)
-
-    def get_position(self):
-        return self.rect.x, self.rect.y
+        self.add(enemyx)
+        self.hero = hero
 
     def update(self, world, delta_time):
-        next_position = world.find_path((self.rect.x, self.rect.y), hero.get_position)
+        next_position = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
         self.rect.x, self.rect.y = next_position
 
     def cut_sheet(self, sheet, columns, rows):
@@ -317,6 +324,7 @@ def start_game():
         if keys[pygame.K_r]:
             game_over()
         obstacles.update()
+        enemyx.update(world, delta_time)
         group.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
