@@ -5,6 +5,7 @@ from random import randint
 import pytmx
 import pyscroll
 from pytmx.util_pygame import load_pygame
+
 pygame.init()
 
 pygame.display.set_caption("Start")
@@ -34,8 +35,9 @@ class Map:
 
     def find_path(self, start, target):
         INF = 1000
-        x = start[0] // 32
-        y = start[1] // 32
+        fix_start = start[0] // self.tile_size, start[1] // self.tile_size
+        fix_target = target[0] // self.tile_size, target[1] // self.tile_size
+        x, y = fix_start
         distance = [[INF] * self.width for _ in range(self.height)]
         distance[y][x] = 0
         prev = [[None] * self.width for _ in range(self.height)]
@@ -43,40 +45,38 @@ class Map:
         while queue:
             x, y = queue.pop(0)
             for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
-                next_x, next_y = x + dx, x + dy
-                print((next_x, next_y))
-                if 0 <= next_x < self.width and 0 < next_y < self.height and\
-                        self.is_free((next_x, next_y)) and\
-                        distance[next_y][next_x] == INF:
+                next_x, next_y = x + dx, y + dy
+                if 0 <= next_x < self.width and 0 < next_y < self.height and \
+                        self.is_free((next_x, next_y)) and distance[next_y][next_x] == INF:
                     distance[next_y][next_x] = distance[y][x] + 1
                     prev[next_y][next_x] = (x, y)
-                    print((next_x, next_y))
                     queue.append((next_x, next_y))
-                    print(queue)
 
-        x = target[0] // 32
-        y = target[1] // 32
+        x, y = fix_target
+
         if distance[y][x] == INF or start == target:
             return start
-        while prev[y][x] != start:
+        while prev[y][x] != fix_start:
             x, y = prev[y][x]
-        return x * 32, y * 32
+        return x * self.tile_size, y * self.tile_size
 
     def render(self):
         for y in range(self.height):
             for x in range(self.width):
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
-                    Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size, y * self.tile_size)
+                    Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,
+                              y * self.tile_size)
         for i in range(1):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2, self.hero)
+                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2,
+                      self.hero)
 
     def get_tile_id(self, position):
         return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
 
     def is_free(self, position):
-        return self.get_tile_id(position) not in self.free_tile
+        return self.get_tile_id(position) in self.free_tile
 
 
 class Obstacles(pygame.sprite.Sprite):
@@ -182,6 +182,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def update(self, world, delta_time):
         next_position = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
+        print(next_position)
         self.rect.x, self.rect.y = next_position
 
     def cut_sheet(self, sheet, columns, rows):
@@ -255,5 +256,6 @@ def start_game():
         group.draw(screen)
         pygame.display.flip()
     pygame.quit()
+
 
 start_screen()
