@@ -17,6 +17,7 @@ color = "white"
 tmx_data = load_pygame("maps/poligon2.0.tmx")
 map_data = pyscroll.TiledMapData(tmx_data)
 screen_size = (1920, 1020)
+TICK = 0
 map_layer = pyscroll.BufferedRenderer(map_data, screen_size, True)
 group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
@@ -38,38 +39,56 @@ class Map:
         fix_start = start[0] // self.tile_size, start[1] // self.tile_size
         fix_target = target[0] // self.tile_size, target[1] // self.tile_size
         x, y = fix_start
-        distance = [[INF] * self.width for _ in range(self.height)]
-        distance[y][x] = 0
-        prev = [[None] * self.width for _ in range(self.height)]
-        queue = [(x, y)]
+        sx, sy = abs(x - fix_target[0]), abs(y - fix_target[1])
+        if sx == 0:
+            sx += 1
+        if sy == 0:
+            sy += 1
+        distance = [[INF] * (sx * 2 - 1) for _ in range(sy * 2 - 1)]
+        distance[sy - 1][sx - 1] = 0
+        prev = [[None] * (sx * 2 - 1) for _ in range(sy * 2 - 1)]
+        queue = [(sx, sy)]
         while queue:
             x, y = queue.pop(0)
             for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
                 next_x, next_y = x + dx, y + dy
-                if 0 <= next_x < self.width and 0 < next_y < self.height and \
-                        self.is_free((next_x, next_y)) and distance[next_y][next_x] == INF:
+                if 0 <= next_x < sx * 2 - 1 \
+                        and 0 < next_y < sy * 2 - 1 \
+                        and self.is_free((next_x, next_y)) \
+                        and distance[next_y][next_x] == INF:
                     distance[next_y][next_x] = distance[y][x] + 1
                     prev[next_y][next_x] = (x, y)
                     queue.append((next_x, next_y))
 
-        x, y = fix_target
-
-        if distance[y][x] == INF or start == target:
+        x, y = sx, sy
+        for i, ev in enumerate(distance):
+            print(i, ev)
+        print('\n', '\n', sx, sy)
+        if distance[y - 1][x - 1] == INF or start == target:
             return start
-        while prev[y][x] != fix_start:
-            x, y = prev[y][x]
-        return x * self.tile_size, y * self.tile_size
+        try:
+            while prev[y][x] != fix_start:
+                    x, y = prev[y][x]
+                    print(prev)
+            return x * self.tile_size, y * self.tile_size
+        except Exception as e:
+            print(e)
+            return start
 
     def render(self):
         for y in range(self.height):
             for x in range(self.width):
-                if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
-                    Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,
+                if self.map.tiledgidmap[
+                    self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
+                    Obstacles(self.map.get_tile_image(x, y, 0),
+                              x * self.tile_size,
                               y * self.tile_size)
-        for i in range(1):
+        for i in range(5):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
-            if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2,
+            if self.map.tiledgidmap[
+                self.map.get_tile_gid(x, y, 0)] in self.free_tile:
+                Enemy((x * self.tile_size, y * self.tile_size),
+                      load_image("llama (1).png"), 3, 2,
                       self.hero)
 
     def get_tile_id(self, position):
@@ -132,11 +151,13 @@ class Hero(pygame.sprite.Sprite):
         return self.rect.x, self.rect.y
 
     def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
         for j in range(rows):
             for i in range(columns):
                 frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+                self.frames.append(sheet.subsurface(
+                    pygame.Rect(frame_location, self.rect.size)))
 
     def animation(self):
         if self.delay % 5 == 0:
@@ -181,16 +202,25 @@ class Enemy(pygame.sprite.Sprite):
         self.hero = hero
 
     def update(self, world, delta_time):
-        next_position = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
-        print(next_position)
-        self.rect.x, self.rect.y = next_position
+        ex_pos, ey_pos = self.rect.x, self.rect.y
+        hx_pos, hy_pos = self.hero.get_position()
+        ex_pos = (hx_pos - ex_pos) // 32
+        ey_pos = (hy_pos - ey_pos) // 32
+        if ex_pos ** 2 + ey_pos ** 2 <= 400:
+            # global TICK
+            # if not TICK % 25:
+            next_position = world.find_path((self.rect.x, self.rect.y),
+                                            self.hero.get_position())
+            self.rect.x, self.rect.y = next_position
 
     def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
         for j in range(rows):
             for i in range(columns):
                 frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+                self.frames.append(sheet.subsurface(
+                    pygame.Rect(frame_location, self.rect.size)))
 
 
 def load_image(name, colorkey=None):
@@ -208,7 +238,8 @@ def play_but():
 
 
 def newgame_but():
-    new_game = Button(400, 100, "data/test_inacrive.png", "data/test_acrive_black.png")
+    new_game = Button(400, 100, "data/test_inacrive.png",
+                      "data/test_acrive_black.png")
     new_game.draw(760, 550, "new_game")
 
 
@@ -235,16 +266,16 @@ def start_screen():
 
 
 def start_game():
+    global TICK
     running = True
     screen.fill((0, 0, 0))
     hero = Hero((32, 32), load_image("llama (1).png"), 3, 2)
     world = Map("poligon2.0.tmx", [30, 15], hero)
-    # game = Game(world, hero)
     world.render()
-    clock = pygame.time.Clock()
     fps = 60
     clock = pygame.time.Clock()
     while running:
+        TICK += clock.tick()
         delta_time = clock.tick(fps) / 1000
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
