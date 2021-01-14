@@ -68,8 +68,11 @@ class Map:
             return start
         try:
             while prev[y][x] != fix_start:
-                    x, y = prev[y][x]
-                    print(prev)
+                print(prev[y][x])
+                if prev[y][x] == None:
+                    return start
+                x, y = prev[y][x]
+                print(x, y)
             return x * self.tile_size, y * self.tile_size
         except Exception as e:
             print(e)
