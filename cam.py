@@ -38,60 +38,45 @@ class Map:
         INF = 1000
         fix_start = start[0] // self.tile_size, start[1] // self.tile_size
         fix_target = target[0] // self.tile_size, target[1] // self.tile_size
-        x, y = fix_start
-        sx, sy = abs(x - fix_target[0]), abs(y - fix_target[1])
-        if sx == 0:
-            sx += 1
-        if sy == 0:
-            sy += 1
-        distance = [[INF] * (sx * 2 - 1) for _ in range(sy * 2 - 1)]
-        distance[sy - 1][sx - 1] = 0
-        prev = [[None] * (sx * 2 - 1) for _ in range(sy * 2 - 1)]
-        queue = [(sx, sy)]
+        zero_coord = fix_start[0] - 20, fix_start[1] - 20
+        x = 20
+        y = 20
+        distance = [[INF] * 39 for _ in range(39)]
+        distance[20][20] = 0
+        prev = [[None] * 39 for _ in range(39)]
+        queue = [(x, y)]
         while queue:
             x, y = queue.pop(0)
             for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
                 next_x, next_y = x + dx, y + dy
-                if 0 <= next_x < sx * 2 - 1 \
-                        and 0 < next_y < sy * 2 - 1 \
-                        and self.is_free((next_x, next_y)) \
-                        and distance[next_y][next_x] == INF:
+                if 0 <= next_x < 39 and 0 <= next_y < 39 and \
+                        self.is_free((next_x + zero_coord[0], next_y + zero_coord[0])) and distance[next_y][next_x] == INF:
                     distance[next_y][next_x] = distance[y][x] + 1
                     prev[next_y][next_x] = (x, y)
                     queue.append((next_x, next_y))
 
-        x, y = sx, sy
-        for i, ev in enumerate(distance):
-            print(i, ev)
-        print('\n', '\n', sx, sy)
-        if distance[y - 1][x - 1] == INF or start == target:
+        x, y = fix_target[0] - zero_coord[0], fix_target[1] - zero_coord[1]
+        if distance[y - zero_coord[1]][x - zero_coord[0]] == INF or fix_start == fix_target:
             return start
-        try:
-            while prev[y][x] != fix_start:
-                print(prev[y][x])
-                if prev[y][x] == None:
-                    return start
-                x, y = prev[y][x]
-                print(x, y)
-            return x * self.tile_size, y * self.tile_size
-        except Exception as e:
-            print(e)
-            return start
+        print(x, y)
+        print(len(prev), len(prev[y]))
+        while prev[y][x] != (20, 20):
+            print(x, y)
+            if prev[y][x] == None:
+                return start
+            x, y = prev[y][x]
+        return (x + zero_coord[0]) * self.tile_size, (y + zero_coord[1]) * self.tile_size
 
     def render(self):
         for y in range(self.height):
             for x in range(self.width):
-                if self.map.tiledgidmap[
-                    self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
-                    Obstacles(self.map.get_tile_image(x, y, 0),
-                              x * self.tile_size,
+                if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
+                    Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,
                               y * self.tile_size)
-        for i in range(5):
+        for i in range(1):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
-            if self.map.tiledgidmap[
-                self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((x * self.tile_size, y * self.tile_size),
-                      load_image("llama (1).png"), 3, 2,
+            if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
+                Enemy((23 * self.tile_size, 27 * self.tile_size), load_image("llama (1).png"), 3, 2,
                       self.hero)
 
     def get_tile_id(self, position):
@@ -210,11 +195,11 @@ class Enemy(pygame.sprite.Sprite):
         ex_pos = (hx_pos - ex_pos) // 32
         ey_pos = (hy_pos - ey_pos) // 32
         if ex_pos ** 2 + ey_pos ** 2 <= 400:
-            # global TICK
-            # if not TICK % 25:
-            next_position = world.find_path((self.rect.x, self.rect.y),
-                                            self.hero.get_position())
-            self.rect.x, self.rect.y = next_position
+            global TICK
+            if not TICK % 10:
+                next_position = world.find_path((self.rect.x, self.rect.y),
+                                                self.hero.get_position())
+                self.rect.x, self.rect.y = next_position
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
