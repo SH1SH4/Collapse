@@ -58,7 +58,7 @@ class Map:
         if fix_start == fix_target:
             return fix_start
         # 0ая координата карты противника по отношению к основной карте
-        zero_coord = (fix_start[0] - 20) * 2, (fix_start[1] - 20) * 2
+        zero_coord = abs(fix_start[0] - 20), abs(fix_start[1] - 20)
         # Рандомное движение если герой далеко, нужно проверить свободен ли блок
         # if fix_target[0] - zero_coord[0] < 0 and fix_target[1] - zero_coord[1] < 0:
         #     return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
@@ -84,7 +84,7 @@ class Map:
         # print(x - zero_coord[0], y - zero_coord[1])
         print('сдвиг', zero_coord)
         print('старт', fix_start)
-        print('старт с сдвигом', fix_start[0] + zero_coord[0])
+        print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
         print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
         print('target с свдигом', x, y)
         # for i, ev in enumerate(distance):
@@ -101,7 +101,6 @@ class Map:
             x, y = prev[y][x]
 
         print('куда идём', x, y)
-        print('сдвиг', zero_coord)
         return (x + zero_coord[0]) * self.tile_size, (y + zero_coord[1]) * self.tile_size
 
     def render(self):
@@ -110,10 +109,10 @@ class Map:
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,
                               y * self.tile_size)
-        for i in range(100):
+        for i in range(1):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2,
+                Enemy((23 * self.tile_size, 27 * self.tile_size), load_image("llama (1).png"), 3, 2,
                       self.hero)
 
     def get_tile_id(self, position):
