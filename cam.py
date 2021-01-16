@@ -1,5 +1,6 @@
 import pygame
 import os
+import time
 import sys
 import pytmx
 import pyscroll
@@ -13,6 +14,16 @@ screen = pygame.display.set_mode(size)
 
 color = "white"
 
+
+def load_image(name, colorkey=None):
+    fullname = os.path.join('data', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    return image
+
+
 tmx_data = load_pygame("maps/poligon2.0.tmx")
 map_data = pyscroll.TiledMapData(tmx_data)
 screen_size = (1920, 1020)
@@ -21,11 +32,14 @@ group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
 hero = pygame.sprite.Group()
 heart = pygame.sprite.Group()
+staminaa = pygame.sprite.Group()
 run = pygame.mixer.Sound('sound/run.wav')
 sound_theme = pygame.mixer.Sound('sound/Alan Walker - Spectre.wav')
 main_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Воланд.wav')
 hit = pygame.mixer.Sound('sound/hit3.wav')
 regen = pygame.mixer.Sound('sound/successful_hit.wav')
+stamina_png = pygame.transform.scale(load_image('stamina.png'), (30, 500))
+
 
 class Map:
     def __init__(self, filename, free_tile):
@@ -94,6 +108,7 @@ class Hero(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = position
         self.delay = 0
         self.hp_health = 10
+        self.stamina = 100
         self.add(hero)
         self.hp_hero(self.hp_health)
 
@@ -119,23 +134,23 @@ class Hero(pygame.sprite.Sprite):
                 self.run_channel = run.play()
 
             if key[pygame.K_LEFT]:
-                if self.hp_health <= 10:
-                    hit.play()
-                    self.hp_health -= 1
-                    self.hp_hero(self.hp_health)
-                else:
-                    self.hp_health = 10
+                # if self.hp_health <= 10:
+                #     hit.play()
+                #     self.hp_health -= 1
+                #     self.hp_hero(self.hp_health)
+                # else:
+                #     self.hp_health = 10
                 self.rect.x -= 5
                 self.animation()
                 if pygame.sprite.spritecollideany(self, obstacles):
                     self.rect.x += 5
             if key[pygame.K_RIGHT]:
-                if self.hp_health <= 10:
-                    regen.play()
-                    self.hp_health += 1
-                    self.hp_hero(self.hp_health)
-                else:
-                    self.hp_health = 10
+                # if self.hp_health <= 10:
+                #     regen.play()
+                #     self.hp_health += 1
+                #     self.hp_hero(self.hp_health)
+                # else:
+                #     self.hp_health = 10
                 self.rect.x += 5
                 self.animation()
                 if pygame.sprite.spritecollideany(self, obstacles):
@@ -161,8 +176,18 @@ class Hero(pygame.sprite.Sprite):
                     hp = HP((pygame.transform.scale(load_image(
                         'kisspng-broken-heart-computer-icons-clip-art-broken-or-splitted-heart-vector-5ae64d56110867.0049922915250425180698.png'),
                         (30, 30))), i)
+            stamina_hero = Stamina(self.stamina, stamina_png)
         else:
             exit()
+
+
+class Stamina(pygame.sprite.Sprite):
+    def __init__(self, stamina, stamina_screen):
+        super().__init__(staminaa)
+        self.image = stamina_screen
+        self.rect = self.image.get_rect()
+        self.rect.x = 10
+        self.rect.y = 10
 
 
 class HP(pygame.sprite.Sprite):
@@ -173,15 +198,6 @@ class HP(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 10 * (health * 3.5)
         self.rect.y = 30
-
-
-def load_image(name, colorkey=None):
-    fullname = os.path.join('data', name)
-    if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
-    image = pygame.image.load(fullname)
-    return image
 
 
 def play_but():
