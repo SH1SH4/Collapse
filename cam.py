@@ -21,6 +21,9 @@ group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
 hero = pygame.sprite.Group()
 heart = pygame.sprite.Group()
+run = pygame.mixer.Sound('sound/шаги.wav')
+sound_theme = pygame.mixer.Sound('sound/Alan Walker - Spectre.wav')
+main_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Воланд.wav')
 
 class Map:
     def __init__(self, filename, free_tile):
@@ -107,28 +110,32 @@ class Hero(pygame.sprite.Sprite):
 
     def update(self, world, delta_time):
         key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT]:
-            self.hp_health -= 1
-            self.hp_hero(self.hp_health)
-            self.rect.x -= 5
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x += 5
-        if key[pygame.K_RIGHT]:
-            self.rect.x += 5
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
+        if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
+            run.play()
+            if key[pygame.K_LEFT]:
+                self.hp_health -= 1
+                self.hp_hero(self.hp_health)
                 self.rect.x -= 5
-        if key[pygame.K_UP]:
-            self.rect.y -= 5
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.y += 5
-        if key[pygame.K_DOWN]:
-            self.rect.y += 5
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
+                self.animation()
+                if pygame.sprite.spritecollideany(self, obstacles):
+                    self.rect.x += 5
+            if key[pygame.K_RIGHT]:
+                self.rect.x += 5
+                self.animation()
+                if pygame.sprite.spritecollideany(self, obstacles):
+                    self.rect.x -= 5
+            if key[pygame.K_UP]:
                 self.rect.y -= 5
+                self.animation()
+                if pygame.sprite.spritecollideany(self, obstacles):
+                    self.rect.y += 5
+            if key[pygame.K_DOWN]:
+                self.rect.y += 5
+                self.animation()
+                if pygame.sprite.spritecollideany(self, obstacles):
+                    self.rect.y -= 5
+        else:
+            run.stop()
 
     def hp_hero(self, health):
         self.remove(heart)
@@ -192,7 +199,9 @@ def start_game():
     screen.fill((0, 0, 0))
     world = Map("poligon2.0.tmx", [30, 15])
     hero = Hero((50, 50), load_image("llama (1).png"), 3, 2, 50, 50)
-
+    main_menu_theme.stop()
+    sound_theme.set_volume(0.3)
+    sound_theme.play(-1)
     # game = Game(world, hero)
     world.render()
     clock = pygame.time.Clock()
@@ -212,5 +221,5 @@ def start_game():
 
     pygame.quit()
 
-
+main_menu_theme.play()
 start_screen()
