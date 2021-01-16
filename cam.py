@@ -38,11 +38,17 @@ class Map:
         INF = 1000
         fix_start = start[0] // self.tile_size, start[1] // self.tile_size
         fix_target = target[0] // self.tile_size, target[1] // self.tile_size
-        zero_coord = fix_start[0] - 20, fix_start[1] - 20
-        x = 20
-        y = 20
+        if fix_start == fix_target:
+            return fix_start
+        # 0ая координата карты противника по отношению к основной карте
+        zero_coord = (fix_start[0] - 20) * 2, (fix_start[1] - 20) * 2
+        # Рандомное движение если герой далеко, нужно проверить свободен ли блок
+        # if fix_target[0] - zero_coord[0] < 0 and fix_target[1] - zero_coord[1] < 0:
+        #     return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
+        x = 19
+        y = 19
         distance = [[INF] * 39 for _ in range(39)]
-        distance[20][20] = 0
+        distance[19][19] = 0
         prev = [[None] * 39 for _ in range(39)]
         queue = [(x, y)]
         while queue:
@@ -50,21 +56,35 @@ class Map:
             for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
                 next_x, next_y = x + dx, y + dy
                 if 0 <= next_x < 39 and 0 <= next_y < 39 and \
-                        self.is_free((next_x + zero_coord[0], next_y + zero_coord[0])) and distance[next_y][next_x] == INF:
+                        self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:
                     distance[next_y][next_x] = distance[y][x] + 1
                     prev[next_y][next_x] = (x, y)
                     queue.append((next_x, next_y))
 
         x, y = fix_target[0] - zero_coord[0], fix_target[1] - zero_coord[1]
-        if distance[y - zero_coord[1]][x - zero_coord[0]] == INF or fix_start == fix_target:
+        # print(fix_target)
+        # print(fix_start)
+        # print(x - zero_coord[0], y - zero_coord[1])
+        print('сдвиг', zero_coord)
+        print('старт', fix_start)
+        print('старт с сдвигом', fix_start[0] + zero_coord[0])
+        print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
+        print('target с свдигом', x, y)
+        # for i, ev in enumerate(distance):
+        #     print(i, ev)
+        # for i, ev in enumerate(prev):
+        #     print(i, ev)
+        if not 38 >= y - zero_coord[1] >= 0 or not 38 >= x - zero_coord[0] >= 0:
             return start
-        print(x, y)
-        print(len(prev), len(prev[y]))
-        while prev[y][x] != (20, 20):
-            print(x, y)
+        if distance[y - zero_coord[1]][x - zero_coord[0]] == INF:
+            return start
+        while prev[y][x] != (19, 19):
             if prev[y][x] == None:
                 return start
             x, y = prev[y][x]
+
+        print('куда идём', x, y)
+        print('сдвиг', zero_coord)
         return (x + zero_coord[0]) * self.tile_size, (y + zero_coord[1]) * self.tile_size
 
     def render(self):
@@ -190,16 +210,13 @@ class Enemy(pygame.sprite.Sprite):
         self.hero = hero
 
     def update(self, world, delta_time):
-        ex_pos, ey_pos = self.rect.x, self.rect.y
-        hx_pos, hy_pos = self.hero.get_position()
-        ex_pos = (hx_pos - ex_pos) // 32
-        ey_pos = (hy_pos - ey_pos) // 32
-        if ex_pos ** 2 + ey_pos ** 2 <= 400:
-            global TICK
-            if not TICK % 10:
-                next_position = world.find_path((self.rect.x, self.rect.y),
-                                                self.hero.get_position())
-                self.rect.x, self.rect.y = next_position
+        global TICK
+        if not TICK % 10:
+            next_position = world.find_path((self.rect.x, self.rect.y),
+                                            self.hero.get_position())
+            print(self.rect.x, self.rect.y)
+            print(next_position)
+            self.rect.x, self.rect.y = next_position
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
