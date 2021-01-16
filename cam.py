@@ -20,6 +20,7 @@ map_layer = pyscroll.BufferedRenderer(map_data, screen_size, True)
 group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
 hero = pygame.sprite.Group()
+SPEED_HERO = 5
 
 
 class Map:
@@ -49,8 +50,7 @@ class Obstacles(pygame.sprite.Sprite):
         self.image = img
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
-        # self.add(obstacles)
-        self.mask = pygame.mask.from_surface(self.image)
+        self.add(obstacles)
 
 
 class Button:
@@ -92,6 +92,7 @@ class Hero(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = position
         self.delay = 0
         self.add(hero)
+        self.speed = 5
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
@@ -118,31 +119,56 @@ class Hero(pygame.sprite.Sprite):
             self.cur_frame = (self.cur_frame + 1) % len(self.frames_left)
             self.image = self.frames_left[self.cur_frame]
         self.delay += 1
-    #
-    # def anim_left(self):
+
 
     def update(self, world, delta_time):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
-            self.rect.x -= 5
+            self.rect.x -= SPEED_HERO
             self.animation_left()
             if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x += 5
+                self.rect.x += SPEED_HERO
         if key[pygame.K_RIGHT]:
-            self.rect.x += 5
+            self.rect.x += SPEED_HERO
             self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x -= 5
+                self.rect.x -= SPEED_HERO
         if key[pygame.K_UP]:
-            self.rect.y -= 5
+            self.rect.y -= SPEED_HERO
             self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.y += 5
+                self.rect.y += SPEED_HERO
         if key[pygame.K_DOWN]:
-            self.rect.y += 5
+            self.rect.y += SPEED_HERO
             self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.y -= 5
+                self.rect.y -= SPEED_HERO
+        if key[pygame.K_a]:
+            self.rect.x -= SPEED_HERO
+            self.animation_left()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.x += SPEED_HERO
+        if key[pygame.K_d]:
+            self.rect.x += SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.x -= SPEED_HERO
+        if key[pygame.K_w]:
+            self.rect.y -= SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.y += SPEED_HERO
+        if key[pygame.K_s]:
+            self.rect.y += SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.y -= SPEED_HERO
+
+
+def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text.ttf"):
+    font_type = pygame.font.Font(font_type, font_size)
+    message = font_type.render(text, True, font_color)
+    screen.blit(message, (x, y))
 
 
 def load_image(name, colorkey=None):
@@ -186,6 +212,19 @@ def start_screen():
         pygame.display.update()
 
 
+def pause():
+    paused = True
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                paused = False
+        print_text("Игра находится на паузе, чтобы продолжить нажмите кнопку ENTER", 145, 450, 40, (255, 255, 255))
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            paused = False
+        pygame.display.update()
+
+
 def start_game():
     running = True
     screen.fill((0, 0, 0))
@@ -201,6 +240,9 @@ def start_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE]:
+            pause()
         obstacles.update()
         group.update(world, delta_time)
         group.center(hero.rect.center)
