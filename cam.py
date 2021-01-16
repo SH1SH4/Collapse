@@ -35,6 +35,23 @@ class Map:
         self.hero = hero
 
     def find_path(self, start, target):
+        # pix_move = 5
+        # move = [0, 0]
+        # xs, ys = start
+        # xt, yt = target
+        # if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
+        #     move[0] += 1
+        # elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
+        #     move[0] -= 1
+        # if ys < yt and self.is_free((xs // 32, (ys + pix_move) // 32)):
+        #     move[1] += 1
+        # elif ys > yt and self.is_free((xs // 32, (ys - pix_move) // 32)):
+        #     move[1] -= 1
+        # # if xs // 32 == xt // 32:
+        # #     move[0] = 0
+        # # if ys // 32 == xt // 32:
+        # #     move[1] = 0
+        # return start[0] + pix_move * move[0], start[1] + pix_move * move[1]
         INF = 1000
         fix_start = start[0] // self.tile_size, start[1] // self.tile_size
         fix_target = target[0] // self.tile_size, target[1] // self.tile_size
@@ -93,10 +110,10 @@ class Map:
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,
                               y * self.tile_size)
-        for i in range(1):
+        for i in range(100):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((23 * self.tile_size, 27 * self.tile_size), load_image("llama (1).png"), 3, 2,
+                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2,
                       self.hero)
 
     def get_tile_id(self, position):
@@ -152,7 +169,7 @@ class Hero(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
         self.rect.x, self.rect.y = position
         self.delay = 0
-        self.speed = 20
+        self.speed = 16
         self.add(herox)
 
     def get_position(self):
@@ -210,13 +227,13 @@ class Enemy(pygame.sprite.Sprite):
         self.hero = hero
 
     def update(self, world, delta_time):
-        global TICK
-        if not TICK % 10:
-            next_position = world.find_path((self.rect.x, self.rect.y),
-                                            self.hero.get_position())
-            print(self.rect.x, self.rect.y)
-            print(next_position)
-            self.rect.x, self.rect.y = next_position
+        # global TICK
+        # if not TICK % 2:
+        next_position = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
+        old = (self.rect.x, self.rect.y)
+        self.rect.x, self.rect.y = next_position
+        if pygame.sprite.spritecollideany(self, obstacles):
+            self.rect.x, self.rect.y = old
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
