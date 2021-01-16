@@ -24,6 +24,8 @@ heart = pygame.sprite.Group()
 run = pygame.mixer.Sound('sound/run.wav')
 sound_theme = pygame.mixer.Sound('sound/Alan Walker - Spectre.wav')
 main_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Воланд.wav')
+hit = pygame.mixer.Sound('sound/hit3.wav')
+regen = pygame.mixer.Sound('sound/successful_hit.wav')
 
 class Map:
     def __init__(self, filename, free_tile):
@@ -95,6 +97,8 @@ class Hero(pygame.sprite.Sprite):
         self.add(hero)
         self.hp_hero(self.hp_health)
 
+        self.run_channel = None
+
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
         for j in range(rows):
@@ -111,20 +115,27 @@ class Hero(pygame.sprite.Sprite):
     def update(self, world, delta_time):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
-            run.play()
-            pygame.mixer.music.queue('sound/run.wav')
+            if self.run_channel is None or not self.run_channel.get_busy():
+                self.run_channel = run.play()
+
             if key[pygame.K_LEFT]:
                 if self.hp_health <= 10:
+                    hit.play()
                     self.hp_health -= 1
                     self.hp_hero(self.hp_health)
+                else:
+                    self.hp_health = 10
                 self.rect.x -= 5
                 self.animation()
                 if pygame.sprite.spritecollideany(self, obstacles):
                     self.rect.x += 5
             if key[pygame.K_RIGHT]:
                 if self.hp_health <= 10:
+                    regen.play()
                     self.hp_health += 1
                     self.hp_hero(self.hp_health)
+                else:
+                    self.hp_health = 10
                 self.rect.x += 5
                 self.animation()
                 if pygame.sprite.spritecollideany(self, obstacles):
@@ -139,18 +150,19 @@ class Hero(pygame.sprite.Sprite):
                 self.animation()
                 if pygame.sprite.spritecollideany(self, obstacles):
                     self.rect.y -= 5
-            print(pygame.mixer.music.get_busy())
-
 
     def hp_hero(self, health):
         self.remove(heart)
-        if health <= 0:
-            print(1432)
-        for i in range(1, 10 + 1):
-            if i <= health:
-                hp = HP((pygame.transform.scale(load_image('heart.png'), (30, 30))), i)
-            else:
-                hp = HP((pygame.transform.scale(load_image('kisspng-broken-heart-computer-icons-clip-art-broken-or-splitted-heart-vector-5ae64d56110867.0049922915250425180698.png'), (29, 29))), i)
+        if health > 0 and health <= 10:
+            for i in range(1, 10 + 1):
+                if i <= health:
+                    hp = HP((pygame.transform.scale(load_image('heart.png'), (30, 30))), i)
+                else:
+                    hp = HP((pygame.transform.scale(load_image(
+                        'kisspng-broken-heart-computer-icons-clip-art-broken-or-splitted-heart-vector-5ae64d56110867.0049922915250425180698.png'),
+                        (30, 30))), i)
+        else:
+            exit()
 
 
 class HP(pygame.sprite.Sprite):
@@ -188,6 +200,7 @@ def exit_but():
 
 
 def start_screen():
+    main_menu_theme.play(-1)
     menu_background = pygame.image.load("data/background.png")
     screen.blit(menu_background, (0, 0))
     clock = pygame.time.Clock()
@@ -231,5 +244,5 @@ def start_game():
 
     pygame.quit()
 
-main_menu_theme.play(-1)
+
 start_screen()
