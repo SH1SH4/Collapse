@@ -120,7 +120,6 @@ class Hero(pygame.sprite.Sprite):
             self.image = self.frames_left[self.cur_frame]
         self.delay += 1
 
-
     def update(self, world, delta_time):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
@@ -225,12 +224,26 @@ def pause():
         pygame.display.update()
 
 
+def game_over():
+    over = True
+    while over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                over = False
+        screen.fill((0, 0, 0))
+        print_text("GAME OVER", 780, 450, 50, (255, 255, 255))
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            over = False
+            start_screen()
+        pygame.display.update()
+
+
 def start_game():
     running = True
     screen.fill((0, 0, 0))
     world = Map("poligon2.0.tmx", [30, 15])
     hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
-    # game = Game(world, hero)
     world.render()
     clock = pygame.time.Clock()
     fps = 60
@@ -243,6 +256,8 @@ def start_game():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
             pause()
+        if keys[pygame.K_r]:
+            game_over()
         obstacles.update()
         group.update(world, delta_time)
         group.center(hero.rect.center)
