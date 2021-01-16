@@ -21,7 +21,7 @@ group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
 hero = pygame.sprite.Group()
 heart = pygame.sprite.Group()
-run = pygame.mixer.Sound('sound/шаги.wav')
+run = pygame.mixer.Sound('sound/run.wav')
 sound_theme = pygame.mixer.Sound('sound/Alan Walker - Spectre.wav')
 main_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Воланд.wav')
 
@@ -112,14 +112,19 @@ class Hero(pygame.sprite.Sprite):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
             run.play()
+            pygame.mixer.music.queue('sound/run.wav')
             if key[pygame.K_LEFT]:
-                self.hp_health -= 1
-                self.hp_hero(self.hp_health)
+                if self.hp_health <= 10:
+                    self.hp_health -= 1
+                    self.hp_hero(self.hp_health)
                 self.rect.x -= 5
                 self.animation()
                 if pygame.sprite.spritecollideany(self, obstacles):
                     self.rect.x += 5
             if key[pygame.K_RIGHT]:
+                if self.hp_health <= 10:
+                    self.hp_health += 1
+                    self.hp_hero(self.hp_health)
                 self.rect.x += 5
                 self.animation()
                 if pygame.sprite.spritecollideany(self, obstacles):
@@ -134,13 +139,18 @@ class Hero(pygame.sprite.Sprite):
                 self.animation()
                 if pygame.sprite.spritecollideany(self, obstacles):
                     self.rect.y -= 5
-        else:
-            run.stop()
+            print(pygame.mixer.music.get_busy())
+
 
     def hp_hero(self, health):
         self.remove(heart)
-        for i in range(1, health + 1):
-            hp = HP((pygame.transform.scale(load_image('heart.png'), (30, 30))), i)
+        if health <= 0:
+            print(1432)
+        for i in range(1, 10 + 1):
+            if i <= health:
+                hp = HP((pygame.transform.scale(load_image('heart.png'), (30, 30))), i)
+            else:
+                hp = HP((pygame.transform.scale(load_image('kisspng-broken-heart-computer-icons-clip-art-broken-or-splitted-heart-vector-5ae64d56110867.0049922915250425180698.png'), (29, 29))), i)
 
 
 class HP(pygame.sprite.Sprite):
@@ -221,5 +231,5 @@ def start_game():
 
     pygame.quit()
 
-main_menu_theme.play()
+main_menu_theme.play(-1)
 start_screen()
