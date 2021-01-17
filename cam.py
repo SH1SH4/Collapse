@@ -5,7 +5,6 @@ from random import randint
 import pytmx
 import pyscroll
 from pytmx.util_pygame import load_pygame
-
 pygame.init()
 
 pygame.display.set_caption("Start")
@@ -21,8 +20,9 @@ TICK = 0
 map_layer = pyscroll.BufferedRenderer(map_data, screen_size, True)
 group = pyscroll.PyscrollGroup(map_layer=map_layer)
 obstacles = pygame.sprite.Group()
-enemyx = pygame.sprite.Group()
-herox = pygame.sprite.Group()
+hero = pygame.sprite.Group()
+SPEED_HERO = 5
+enemy = pygame.sprite.Group()
 
 
 class Map:
@@ -128,8 +128,7 @@ class Obstacles(pygame.sprite.Sprite):
         self.image = img
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
-        # self.add(obstacles)
-        self.mask = pygame.mask.from_surface(self.image)
+        self.add(obstacles)
 
 
 class Button:
@@ -159,57 +158,120 @@ class Button:
 
 
 class Hero(pygame.sprite.Sprite):
-    def __init__(self, position, sheet, columns, rows):
+    def __init__(self, position, sheet, sheet_left, columns, rows):
         pygame.sprite.Sprite.__init__(self, group)
 
+        self.frames = []
+        self.frames_left = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cut_sheet_left(sheet_left, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect.x, self.rect.y = position
+        self.delay = 0
+        self.add(hero)
+
+    def get_position(self):
+        return self.rect.x, self.rect.y
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
+    def cut_sheet_left(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames_left.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
+    def animation(self):
+        if self.delay % 10 == 0:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
+        self.delay += 1
+
+    def animation_left(self):
+        if self.delay % 10 == 0:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames_left)
+            self.image = self.frames_left[self.cur_frame]
+        self.delay += 1
+
+    def update(self, world, delta_time):
+        key = pygame.key.get_pressed()
+        if key[pygame.K_LEFT]:
+            self.rect.x -= SPEED_HERO
+            self.animation_left()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.x += SPEED_HERO
+        if key[pygame.K_RIGHT]:
+            self.rect.x += SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.x -= SPEED_HERO
+        if key[pygame.K_UP]:
+            self.rect.y -= SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.y += SPEED_HERO
+        if key[pygame.K_DOWN]:
+            self.rect.y += SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.y -= SPEED_HERO
+        if key[pygame.K_a]:
+            self.rect.x -= SPEED_HERO
+            self.animation_left()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.x += SPEED_HERO
+        if key[pygame.K_d]:
+            self.rect.x += SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.x -= SPEED_HERO
+        if key[pygame.K_w]:
+            self.rect.y -= SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.y += SPEED_HERO
+        if key[pygame.K_s]:
+            self.rect.y += SPEED_HERO
+            self.animation()
+            if pygame.sprite.spritecollideany(self, obstacles):
+                self.rect.y -= SPEED_HERO
+
+
+def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text.ttf"):
+    font_type = pygame.font.Font(font_type, font_size)
+    message = font_type.render(text, True, font_color)
+    screen.blit(message, (x, y))
+
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, position, sheet, columns, rows, hero):
+        pygame.sprite.Sprite.__init__(self, group)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
         self.rect.x, self.rect.y = position
         self.delay = 0
-        self.speed = 16
-        self.add(herox)
+        self.add(enemyx)
+        self.hero = hero
 
-    def get_position(self):
-        return self.rect.x, self.rect.y
+    def update(self, world, delta_time):
+        next_position = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
+        self.rect.x, self.rect.y = next_position
 
     def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
         for j in range(rows):
             for i in range(columns):
                 frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(
-                    pygame.Rect(frame_location, self.rect.size)))
-
-    def animation(self):
-        if self.delay % 5 == 0:
-            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-            self.image = self.frames[self.cur_frame]
-        self.delay += 1
-
-    def update(self, world, delta_time):
-        key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT]:
-            self.rect.x -= self.speed
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x += self.speed
-        if key[pygame.K_RIGHT]:
-            self.rect.x += self.speed
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x -= self.speed
-        if key[pygame.K_UP]:
-            self.rect.y -= self.speed
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.y += self.speed
-        if key[pygame.K_DOWN]:
-            self.rect.y += self.speed
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
                 self.rect.y -= self.speed
 
 
@@ -259,8 +321,7 @@ def play_but():
 
 
 def newgame_but():
-    new_game = Button(400, 100, "data/test_inacrive.png",
-                      "data/test_acrive_black.png")
+    new_game = Button(400, 100, "data/test_inacrive.png", "data/test_acrive_black.png")
     new_game.draw(760, 550, "new_game")
 
 
@@ -286,8 +347,35 @@ def start_screen():
         pygame.display.update()
 
 
+def pause():
+    paused = True
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                paused = False
+        print_text("Игра находится на паузе, чтобы продолжить нажмите кнопку ENTER", 145, 450, 40, (255, 255, 255))
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            paused = False
+        pygame.display.update()
+
+
+def game_over():
+    over = True
+    while over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                over = False
+        screen.fill((0, 0, 0))
+        print_text("GAME OVER", 780, 450, 50, (255, 255, 255))
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            over = False
+            start_screen()
+        pygame.display.update()
+
+
 def start_game():
-    global TICK
     running = True
     screen.fill((0, 0, 0))
     hero = Hero((32, 32), load_image("llama (1).png"), 3, 2)
@@ -301,13 +389,18 @@ def start_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE]:
+            pause()
+        if keys[pygame.K_r]:
+            game_over()
         obstacles.update()
         enemyx.update(world, delta_time)
         group.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
         pygame.display.flip()
-    pygame.quit()
 
+    pygame.quit()
 
 start_screen()
