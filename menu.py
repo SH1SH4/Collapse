@@ -154,6 +154,9 @@ def start_screen():
                 quit()
         pygame.display.update()
 
+map = Map("poligon2.0.tmx", [30])
+map.get_tile_id((2, 2))
+
 
 def start_game():
     camera = Camera()
@@ -174,6 +177,7 @@ def start_game():
         clock.tick(fps)
         game.render(screen)
         game.update_hero()
+
     pygame.quit()
 
 start_screen()
