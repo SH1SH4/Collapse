@@ -1,0 +1,591 @@
+Index: cam.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import pygame\r\nimport os\r\nimport sys\r\nfrom random import randint\r\nimport pytmx\r\nimport pyscroll\r\nfrom pytmx.util_pygame import load_pygame\r\npygame.init()\r\n\r\npygame.display.set_caption(\"Start\")\r\nsize = width, height = 1920, 1020\r\nscreen = pygame.display.set_mode(size)\r\n\r\ncolor = \"white\"\r\n\r\n\r\ndef load_image(name, colorkey=None):\r\n    fullname = os.path.join('data', name)\r\n    if not os.path.isfile(fullname):\r\n        print(f\"Файл с изображением '{fullname}' не найден\")\r\n        sys.exit()\r\n    image = pygame.image.load(fullname)\r\n    return image\r\n\r\n\r\ntmx_data = load_pygame(\"maps/poligon2.0.tmx\")\r\nmap_data = pyscroll.TiledMapData(tmx_data)\r\nscreen_size = (1920, 1020)\r\nTICK = 0\r\nmap_layer = pyscroll.BufferedRenderer(map_data, screen_size, True)\r\ngroup = pyscroll.PyscrollGroup(map_layer=map_layer)\r\nobstacles = pygame.sprite.Group()\r\nhero = pygame.sprite.Group()\r\nheart = pygame.sprite.Group()\r\nstaminaa = pygame.sprite.Group()\r\nrun = pygame.mixer.Sound('sound/run.wav')\r\nsound_theme = pygame.mixer.Sound('sound/Alan Walker - Spectre.wav')\r\nmain_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Воланд.wav')\r\nhit = pygame.mixer.Sound('sound/hit3.wav')\r\nregen = pygame.mixer.Sound('sound/successful_hit.wav')\r\nstamina_png = pygame.transform.scale(load_image('stamina.png'), (30, 500))\r\nSPEED_HERO = 5\r\nenemy = pygame.sprite.Group()\r\n\r\n\r\nclass Map:\r\n    def __init__(self, filename, free_tile, hero):\r\n        self.map = pytmx.load_pygame(f\"maps/{filename}\")\r\n        self.height = self.map.height\r\n        self.width = self.map.width\r\n        self.tile_size = self.map.tilewidth\r\n        self.free_tile = free_tile\r\n        self.hero = hero\r\n\r\n    def find_path(self, start, target):\r\n        # pix_move = 16\r\n        # move = [0, 0]\r\n        # xs, ys = start\r\n        # xt, yt = target\r\n        # if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):\r\n        #     move[0] += 1\r\n        # elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):\r\n        #     move[0] -= 1\r\n        # if ys < yt and self.is_free((xs // 32, (ys + pix_move) // 32)):\r\n        #     move[1] += 1\r\n        # elif ys > yt and self.is_free((xs // 32, (ys - pix_move) // 32)):\r\n        #     move[1] -= 1\r\n        # # if xs // 32 == xt // 32:\r\n        # #     move[0] = 0\r\n        # # if ys // 32 == xt // 32:\r\n        # #     move[1] = 0\r\n        # return start[0] + pix_move * move[0], start[1] + pix_move * move[1]\r\n        INF = 1000\r\n        fix_start = start[0] // self.tile_size, start[1] // self.tile_size\r\n        fix_target = target[0] // self.tile_size, target[1] // self.tile_size\r\n        if fix_start == fix_target:\r\n            return fix_start\r\n        # 0ая координата карты противника по отношению к основной карте\r\n        zero_coord = fix_start[0] - 19, fix_start[1] - 19\r\n        zero_coord_abs = list(map(abs, zero_coord))\r\n        # print(zero_coord, zero_coord_abs)\r\n        # Рандомное движение если герой далеко, нужно проверить свободен ли блок\r\n        if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:\r\n            print('random')\r\n            return start\r\n            # return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32\r\n        x = 19\r\n        y = 19\r\n        distance = [[INF] * 39 for _ in range(39)]\r\n        distance[19][19] = 0\r\n        prev = [[None] * 39 for _ in range(39)]\r\n        queue = [(x, y)]\r\n        while queue:\r\n            x, y = queue.pop(0)\r\n            for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):\r\n                next_x, next_y = x + dx, y + dy\r\n                if 0 <= next_x < 39 and 0 <= next_y < 39 and \\\r\n                        self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:\r\n                    distance[next_y][next_x] = distance[y][x] + 1\r\n                    prev[next_y][next_x] = (x, y)\r\n                    queue.append((next_x, next_y))\r\n\r\n        x, y = fix_target[0] - zero_coord_abs[0], fix_target[1] - zero_coord_abs[1]\r\n        # print(fix_target)\r\n        # print(fix_start)\r\n        # print(x - zero_coord[0], y - zero_coord[1])\r\n        # print('------')\r\n        # print('сдвиг', zero_coord)\r\n        # print('старт', fix_start)\r\n        # print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])\r\n        # print('target без сдвига', x + zero_coord[0], y + zero_coord[1])\r\n        # print('target с свдигом', x, y)\r\n        # for i, ev in enumerate(distance):\r\n        #     print(i, ev)\r\n        # for i, ev in enumerate(prev):\r\n        #     print(i, ev)\r\n        if distance[y][x] == INF:\r\n            print('return start')\r\n            return start\r\n        while prev[y][x] != (19, 19):\r\n            if prev[y][x] == None:\r\n                print('ноне')\r\n                return start\r\n            x, y = prev[y][x]\r\n            print(x, y)\r\n        print('откуда идём', start[0], start[1])\r\n        print('куда идём', (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size)\r\n        return (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size\r\n\r\n    def render(self):\r\n        for y in range(self.height):\r\n            for x in range(self.width):\r\n                if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:\r\n                    Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,\r\n                              y * self.tile_size)\r\n        for _ in range(20):\r\n            x, y = (randint(0, self.width - 1), randint(0, self.height - 1))\r\n            if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:\r\n                Enemy((x * self.tile_size, y * self.tile_size), load_image(\"llama (1).png\"), 3, 2,\r\n                      self.hero)\r\n\r\n    def get_tile_id(self, position):\r\n        return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]\r\n\r\n    def is_free(self, position):\r\n        return self.get_tile_id(position) in self.free_tile\r\n\r\n\r\nclass Obstacles(pygame.sprite.Sprite):\r\n    def __init__(self, img, x, y):\r\n        super().__init__(obstacles)\r\n        self.image = img\r\n        self.rect = self.image.get_rect()\r\n        self.rect.x, self.rect.y = x, y\r\n        self.add(obstacles)\r\n\r\n\r\nclass Button:\r\n    def __init__(self, width, height, inactive=None, active=None):\r\n        self.width = width\r\n        self.height = height\r\n        self.inactive = pygame.image.load(inactive)\r\n        self.active = pygame.image.load(active)\r\n\r\n    def draw(self, x, y, name, action=None):\r\n        mouse = pygame.mouse.get_pos()\r\n        click = pygame.mouse.get_pressed()\r\n        if x < mouse[0] < x + self.width and y < mouse[1] < y + self.height:\r\n            screen.blit(self.active, (x, y))\r\n            if click[0] == 1:\r\n                screen.blit(self.active, (x, y))\r\n                if name == \"play\":\r\n                    start_game()\r\n                    print(\"Ok\")\r\n                if name == \"new_game\":\r\n                    print(\"New game\")\r\n                if name == \"exit\":\r\n                    pygame.quit()\r\n                    quit()\r\n        else:\r\n            screen.blit(self.inactive, (x, y))\r\n\r\n\r\nclass Hero(pygame.sprite.Sprite):\r\n    def __init__(self, position, sheet, sheet_left, columns, rows):\r\n        pygame.sprite.Sprite.__init__(self, group)\r\n\r\n        self.frames = []\r\n        self.frames_left = []\r\n        self.cut_sheet(sheet, columns, rows)\r\n        self.cut_sheet_left(sheet_left, columns, rows)\r\n        self.cur_frame = 0\r\n        self.image = self.frames[self.cur_frame]\r\n        self.rect.x, self.rect.y = position\r\n        self.delay = 0\r\n        self.hp_health = 10\r\n        self.stamina = 100\r\n        self.add(hero)\r\n        self.hp_hero(self.hp_health)\r\n\r\n        self.run_channel = None\r\n\r\n    def get_position(self):\r\n        return self.rect.x, self.rect.y\r\n\r\n    def cut_sheet(self, sheet, columns, rows):\r\n        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)\r\n        for j in range(rows):\r\n            for i in range(columns):\r\n                frame_location = (self.rect.w * i, self.rect.h * j)\r\n                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))\r\n\r\n    def cut_sheet_left(self, sheet, columns, rows):\r\n        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)\r\n        for j in range(rows):\r\n            for i in range(columns):\r\n                frame_location = (self.rect.w * i, self.rect.h * j)\r\n                self.frames_left.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))\r\n\r\n    def animation(self):\r\n        if self.delay % 10 == 0:\r\n            self.cur_frame = (self.cur_frame + 1) % len(self.frames)\r\n            self.image = self.frames[self.cur_frame]\r\n        self.delay += 1\r\n\r\n    def animation_left(self):\r\n        if self.delay % 10 == 0:\r\n            self.cur_frame = (self.cur_frame + 1) % len(self.frames_left)\r\n            self.image = self.frames_left[self.cur_frame]\r\n        self.delay += 1\r\n\r\n    def update(self, world, delta_time):\r\n        key = pygame.key.get_pressed()\r\n        if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:\r\n            if self.run_channel is None or not self.run_channel.get_busy():\r\n                self.run_channel = run.play()\r\n\r\n        if key[pygame.K_LEFT]:\r\n            self.rect.x -= SPEED_HERO\r\n            self.animation_left()\r\n            if pygame.sprite.spritecollideany(self, obstacles):\r\n                self.rect.x += SPEED_HERO\r\n        if key[pygame.K_RIGHT]:\r\n            self.rect.x += SPEED_HERO\r\n            self.animation()\r\n            if pygame.sprite.spritecollideany(self, obstacles):\r\n                self.rect.x -= SPEED_HERO\r\n        if key[pygame.K_UP]:\r\n            self.rect.y -= SPEED_HERO\r\n            self.animation()\r\n            if pygame.sprite.spritecollideany(self, obstacles):\r\n                self.rect.y += SPEED_HERO\r\n        if key[pygame.K_DOWN]:\r\n            self.rect.y += SPEED_HERO\r\n            self.animation()\r\n            if pygame.sprite.spritecollideany(self, obstacles):\r\n                self.rect.y -= SPEED_HERO\r\n        if key[pygame.K_a]:\r\n            self.rect.x -= SPEED_HERO\r\n            self.animation_left()\r\n            if pygame.sprite.spritecollideany(self, obstacles):\r\n                self.rect.x += SPEED_HERO\r\n        if key[pygame.K_d]:\r\n            self.rect.x += SPEED_HERO\r\n            self.animation()\r\n            if pygame.sprite.spritecollideany(self, obstacles):\r\n                self.rect.x -= SPEED_HERO\r\n        if key[pygame.K_w]:\r\n            self.rect.y -= SPEED_HERO\r\n            self.animation()\r\n            if pygame.sprite.spritecollideany(self, obstacles):\r\n                self.rect.y += SPEED_HERO\r\n        if key[pygame.K_s]:\r\n            self.rect.y += SPEED_HERO\r\n            self.animation()\r\n            if pygame.sprite.spritecollideany(self, obstacles):\r\n                self.rect.y -= SPEED_HERO\r\n\r\n\r\n    def hp_hero(self, health):\r\n        self.remove(heart)\r\n        if health > 0 and health <= 10:\r\n            for i in range(1, 10 + 1):\r\n                if i <= health:\r\n                    hp = HP((pygame.transform.scale(load_image('heart.png'), (30, 30))), i)\r\n                else:\r\n                    hp = HP((pygame.transform.scale(load_image(\r\n                        'kisspng-broken-heart-computer-icons-clip-art-broken-or-splitted-heart-vector-5ae64d56110867.0049922915250425180698.png'),\r\n                        (30, 30))), i)\r\n            stamina_hero = Stamina(self.stamina, stamina_png)\r\n        else:\r\n            exit()\r\n\r\ndef print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type=\"data/text.ttf\"):\r\n    font_type = pygame.font.Font(font_type, font_size)\r\n    message = font_type.render(text, True, font_color)\r\n    screen.blit(message, (x, y))\r\n\r\n\r\nclass Enemy(pygame.sprite.Sprite):\r\n    def __init__(self, position, sheet, columns, rows, hero):\r\n        pygame.sprite.Sprite.__init__(self, group)\r\n        self.frames = []\r\n        self.cut_sheet(sheet, columns, rows)\r\n        self.cur_frame = 0\r\n        self.image = self.frames[self.cur_frame]\r\n        self.rect.x, self.rect.y = position\r\n        self.delay = 0\r\n        self.add(enemy)\r\n        self.hero = hero\r\n\r\n    def update(self, world, delta_time):\r\n        if not TICK % 7:\r\n            next_step = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())\r\n            print(f'''---\r\n{next_step}\r\n---''')\r\n            self.rect.x, self.rect.y = next_step\r\n\r\n    def cut_sheet(self, sheet, columns, rows):\r\n        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,\r\n                                sheet.get_height() // rows)\r\n        for j in range(rows):\r\n            for i in range(columns):\r\n                frame_location = (self.rect.w * i, self.rect.h * j)\r\n                self.frames.append(sheet.subsurface(\r\n                    pygame.Rect(frame_location, self.rect.size)))\r\n\r\nclass Stamina(pygame.sprite.Sprite):\r\n    def __init__(self, stamina, stamina_screen):\r\n        super().__init__(staminaa)\r\n        self.image = stamina_screen\r\n        self.rect = self.image.get_rect()\r\n        self.rect.x = 10\r\n        self.rect.y = 10\r\n\r\n\r\nclass HP(pygame.sprite.Sprite):\r\n    def __init__(self, sheet, health):\r\n        print(health)\r\n        super().__init__(heart)\r\n        self.image = sheet\r\n        self.rect = self.image.get_rect()\r\n        self.rect.x = 10 * (health * 3.5)\r\n        self.rect.y = 30\r\n\r\n\r\ndef play_but():\r\n    play = Button(400, 100, \"data/play_inactive.png\", \"data/play_active.png\")\r\n    play.draw(760, 400, \"play\")\r\n\r\n\r\ndef newgame_but():\r\n    new_game = Button(400, 100, \"data/test_inacrive.png\", \"data/test_acrive_black.png\")\r\n    new_game.draw(760, 550, \"new_game\")\r\n\r\n\r\ndef exit_but():\r\n    exit_b = Button(400, 100, \"data/exit_inacrive.png\", \"data/exit_acrive.png\")\r\n    exit_b.draw(760, 700, \"exit\")\r\n\r\n\r\ndef start_screen():\r\n    main_menu_theme.play(-1)\r\n    menu_background = pygame.image.load(\"data/background.png\")\r\n    screen.blit(menu_background, (0, 0))\r\n    clock = pygame.time.Clock()\r\n    run = True\r\n    while run:\r\n        for event in pygame.event.get():\r\n            play_but()\r\n            newgame_but()\r\n            exit_but()\r\n            if event.type == pygame.QUIT:\r\n                run = False\r\n                pygame.quit()\r\n                quit()\r\n        pygame.display.update()\r\n\r\n\r\ndef pause():\r\n    paused = True\r\n    while paused:\r\n        for event in pygame.event.get():\r\n            if event.type == pygame.QUIT:\r\n                paused = False\r\n        print_text(\"Игра находится на паузе, чтобы продолжить нажмите кнопку ENTER\", 145, 450, 40, (255, 255, 255))\r\n        keys = pygame.key.get_pressed()\r\n        if keys[pygame.K_RETURN]:\r\n            paused = False\r\n        pygame.display.update()\r\n\r\n\r\ndef game_over():\r\n    over = True\r\n    while over:\r\n        for event in pygame.event.get():\r\n            if event.type == pygame.QUIT:\r\n                over = False\r\n        screen.fill((0, 0, 0))\r\n        print_text(\"GAME OVER\", 780, 450, 50, (255, 255, 255))\r\n        keys = pygame.key.get_pressed()\r\n        if keys[pygame.K_RETURN]:\r\n            over = False\r\n            start_screen()\r\n        pygame.display.update()\r\n\r\n\r\ndef start_game():\r\n    global TICK\r\n    running = True\r\n    screen.fill((0, 0, 0))\r\n    hero = Hero((50, 50), load_image(\"hero.png\"), load_image(\"hero_left.png\"), 2, 2)\r\n    world = Map(\"poligon2.0.tmx\", [30, 15], hero)\r\n    main_menu_theme.stop()\r\n    sound_theme.set_volume(0.3)\r\n    sound_theme.play(-1)\r\n    world.render()\r\n    clock = pygame.time.Clock()\r\n    fps = 60\r\n    clock = pygame.time.Clock()\r\n    while running:\r\n        TICK += clock.tick()\r\n        delta_time = clock.tick(fps) / 1000\r\n        for event in pygame.event.get():\r\n            if event.type == pygame.QUIT:\r\n                running = False\r\n        keys = pygame.key.get_pressed()\r\n        if keys[pygame.K_ESCAPE]:\r\n            pause()\r\n        if keys[pygame.K_r]:\r\n            game_over()\r\n        obstacles.update()\r\n        enemy.update(world, delta_time)\r\n        group.update(world, delta_time)\r\n        group.center(hero.rect.center)\r\n        group.draw(screen)\r\n        heart.draw(screen)\r\n        pygame.display.flip()\r\n\r\n    pygame.quit()\r\n\r\nstart_screen()
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- cam.py	(revision e7056fe161a4117d9a6c7d6886307610d2d83e97)
++++ cam.py	(date 1610994467741)
+@@ -53,79 +53,79 @@
+         self.hero = hero
+ 
+     def find_path(self, start, target):
+-        # pix_move = 16
+-        # move = [0, 0]
+-        # xs, ys = start
+-        # xt, yt = target
+-        # if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
+-        #     move[0] += 1
+-        # elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
+-        #     move[0] -= 1
+-        # if ys < yt and self.is_free((xs // 32, (ys + pix_move) // 32)):
+-        #     move[1] += 1
+-        # elif ys > yt and self.is_free((xs // 32, (ys - pix_move) // 32)):
+-        #     move[1] -= 1
+-        # # if xs // 32 == xt // 32:
+-        # #     move[0] = 0
+-        # # if ys // 32 == xt // 32:
+-        # #     move[1] = 0
+-        # return start[0] + pix_move * move[0], start[1] + pix_move * move[1]
+-        INF = 1000
+-        fix_start = start[0] // self.tile_size, start[1] // self.tile_size
+-        fix_target = target[0] // self.tile_size, target[1] // self.tile_size
+-        if fix_start == fix_target:
+-            return fix_start
+-        # 0ая координата карты противника по отношению к основной карте
+-        zero_coord = fix_start[0] - 19, fix_start[1] - 19
+-        zero_coord_abs = list(map(abs, zero_coord))
+-        # print(zero_coord, zero_coord_abs)
+-        # Рандомное движение если герой далеко, нужно проверить свободен ли блок
+-        if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+-            print('random')
+-            return start
+-            # return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
+-        x = 19
+-        y = 19
+-        distance = [[INF] * 39 for _ in range(39)]
+-        distance[19][19] = 0
+-        prev = [[None] * 39 for _ in range(39)]
+-        queue = [(x, y)]
+-        while queue:
+-            x, y = queue.pop(0)
+-            for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
+-                next_x, next_y = x + dx, y + dy
+-                if 0 <= next_x < 39 and 0 <= next_y < 39 and \
+-                        self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:
+-                    distance[next_y][next_x] = distance[y][x] + 1
+-                    prev[next_y][next_x] = (x, y)
+-                    queue.append((next_x, next_y))
+-
+-        x, y = fix_target[0] - zero_coord_abs[0], fix_target[1] - zero_coord_abs[1]
+-        # print(fix_target)
+-        # print(fix_start)
+-        # print(x - zero_coord[0], y - zero_coord[1])
+-        # print('------')
+-        # print('сдвиг', zero_coord)
+-        # print('старт', fix_start)
+-        # print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
+-        # print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
+-        # print('target с свдигом', x, y)
+-        # for i, ev in enumerate(distance):
+-        #     print(i, ev)
+-        # for i, ev in enumerate(prev):
+-        #     print(i, ev)
+-        if distance[y][x] == INF:
+-            print('return start')
+-            return start
+-        while prev[y][x] != (19, 19):
+-            if prev[y][x] == None:
+-                print('ноне')
+-                return start
+-            x, y = prev[y][x]
+-            print(x, y)
+-        print('откуда идём', start[0], start[1])
+-        print('куда идём', (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size)
+-        return (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size
++        pix_move = 16
++        move = [0, 0]
++        xs, ys = start
++        xt, yt = target
++        if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
++            move[0] += 1
++        elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
++            move[0] -= 1
++        if ys < yt and self.is_free((xs // 32, (ys + pix_move) // 32)):
++            move[1] += 1
++        elif ys > yt and self.is_free((xs // 32, (ys - pix_move) // 32)):
++            move[1] -= 1
++        # if xs // 32 == xt // 32:
++        #     move[0] = 0
++        # if ys // 32 == xt // 32:
++        #     move[1] = 0
++        return start[0] + pix_move * move[0], start[1] + pix_move * move[1]
++        # INF = 1000
++        # fix_start = start[0] // self.tile_size, start[1] // self.tile_size
++        # fix_target = target[0] // self.tile_size, target[1] // self.tile_size
++        # if fix_start == fix_target:
++        #     return fix_start
++        # # 0ая координата карты противника по отношению к основной карте
++        # zero_coord = fix_start[0] - 19, fix_start[1] - 19
++        # zero_coord_abs = list(map(abs, zero_coord))
++        # # print(zero_coord, zero_coord_abs)
++        # # Рандомное движение если герой далеко, нужно проверить свободен ли блок
++        # if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
++        #     print('random')
++        #     return start
++        #     # return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
++        # x = 19
++        # y = 19
++        # distance = [[INF] * 39 for _ in range(39)]
++        # distance[19][19] = 0
++        # prev = [[None] * 39 for _ in range(39)]
++        # queue = [(x, y)]
++        # while queue:
++        #     x, y = queue.pop(0)
++        #     for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
++        #         next_x, next_y = x + dx, y + dy
++        #         if 0 <= next_x < 39 and 0 <= next_y < 39 and \
++        #                 self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:
++        #             distance[next_y][next_x] = distance[y][x] + 1
++        #             prev[next_y][next_x] = (x, y)
++        #             queue.append((next_x, next_y))
++        #
++        # x, y = fix_target[0] - zero_coord_abs[0], fix_target[1] - zero_coord_abs[1]
++        # # print(fix_target)
++        # # print(fix_start)
++        # # print(x - zero_coord[0], y - zero_coord[1])
++        # # print('------')
++        # # print('сдвиг', zero_coord)
++        # # print('старт', fix_start)
++        # # print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
++        # # print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
++        # # print('target с свдигом', x, y)
++        # # for i, ev in enumerate(distance):
++        # #     print(i, ev)
++        # # for i, ev in enumerate(prev):
++        # #     print(i, ev)
++        # if distance[y][x] == INF:
++        #     print('return start')
++        #     return start
++        # while prev[y][x] != (19, 19):
++        #     if prev[y][x] == None:
++        #         print('ноне')
++        #         return start
++        #     x, y = prev[y][x]
++        #     print(x, y)
++        # print('откуда идём', start[0], start[1])
++        # print('куда идём', (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size)
++        # return (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size
+ 
+     def render(self):
+         for y in range(self.height):
+@@ -234,6 +234,9 @@
+         if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
+             if self.run_channel is None or not self.run_channel.get_busy():
+                 self.run_channel = run.play()
++        if self.hp_health <= 0:
++            sound_theme.stop()
++            game_over()
+ 
+         if key[pygame.K_LEFT]:
+             self.rect.x -= SPEED_HERO
+@@ -275,6 +278,10 @@
+             self.animation()
+             if pygame.sprite.spritecollideany(self, obstacles):
+                 self.rect.y -= SPEED_HERO
++        if key[pygame.K_MINUS]:
++            if self.hp_health <= 10:
++                self.hp_health -= 1
++                self.hp_hero(self.hp_health)
+ 
+ 
+     def hp_hero(self, health):
+@@ -288,8 +295,6 @@
+                         'kisspng-broken-heart-computer-icons-clip-art-broken-or-splitted-heart-vector-5ae64d56110867.0049922915250425180698.png'),
+                         (30, 30))), i)
+             stamina_hero = Stamina(self.stamina, stamina_png)
+-        else:
+-            exit()
+ 
+ def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text.ttf"):
+     font_type = pygame.font.Font(font_type, font_size)
+@@ -384,9 +389,9 @@
+         for event in pygame.event.get():
+             if event.type == pygame.QUIT:
+                 paused = False
+-        print_text("Игра находится на паузе, чтобы продолжить нажмите кнопку ENTER", 145, 450, 40, (255, 255, 255))
++        print_text("Игра находится на паузе, чтобы продолжить нажмите кнопку ESC", 145, 450, 40, (255, 255, 255))
+         keys = pygame.key.get_pressed()
+-        if keys[pygame.K_RETURN]:
++        if keys[pygame.K_ESCAPE]:
+             paused = False
+         pygame.display.update()
+ 
+@@ -396,7 +401,7 @@
+     while over:
+         for event in pygame.event.get():
+             if event.type == pygame.QUIT:
+-                over = False
++                exit()
+         screen.fill((0, 0, 0))
+         print_text("GAME OVER", 780, 450, 50, (255, 255, 255))
+         keys = pygame.key.get_pressed()
+@@ -428,8 +433,6 @@
+         keys = pygame.key.get_pressed()
+         if keys[pygame.K_ESCAPE]:
+             pause()
+-        if keys[pygame.K_r]:
+-            game_over()
+         obstacles.update()
+         enemy.update(world, delta_time)
+         group.update(world, delta_time)
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"BranchesTreeState\">\r\n    <expand>\r\n      <path>\r\n        <item name=\"ROOT\" type=\"e8cecc67:BranchNodeDescriptor\" />\r\n        <item name=\"LOCAL_ROOT\" type=\"e8cecc67:BranchNodeDescriptor\" />\r\n      </path>\r\n      <path>\r\n        <item name=\"ROOT\" type=\"e8cecc67:BranchNodeDescriptor\" />\r\n        <item name=\"REMOTE_ROOT\" type=\"e8cecc67:BranchNodeDescriptor\" />\r\n      </path>\r\n      <path>\r\n        <item name=\"ROOT\" type=\"e8cecc67:BranchNodeDescriptor\" />\r\n        <item name=\"REMOTE_ROOT\" type=\"e8cecc67:BranchNodeDescriptor\" />\r\n        <item name=\"GROUP_NODE:origin\" type=\"e8cecc67:BranchNodeDescriptor\" />\r\n      </path>\r\n    </expand>\r\n    <select />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"23b46b07-1fbf-41ad-a3bd-b630687e7de1\" name=\"Default Changelist\" comment=\"Рабочие противники\" />\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"Python Script\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\r\n      <map>\r\n        <entry key=\"$PROJECT_DIR$\" value=\"sh1sh4_dev\" />\r\n      </map>\r\n    </option>\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n    <option name=\"UPDATE_TYPE\" value=\"REBASE\" />\r\n  </component>\r\n  <component name=\"ProjectId\" id=\"1m7AlXfpPcdUvYZRqqEjItlOJHg\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\">\r\n    <property name=\"RunOnceActivity.OpenProjectViewOnStart\" value=\"true\" />\r\n    <property name=\"ignore_missing_gitignore\" value=\"true\" />\r\n  </component>\r\n  <component name=\"RunManager\" selected=\"Python.cam\">\r\n    <configuration name=\"cam\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"C:\\Users\\SH1SH4\\PycharmProjects\\untitled\\venv\\Scripts\\python.exe\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"false\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <module name=\"\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/cam.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"main\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"CovidInRussia\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/main.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"menu\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"CovidInRussia\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"C:\\Users\\SH1SH4\\PycharmProjects\\untitled2\\venv\\Scripts\\python.exe\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"false\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/menu.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"test\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"CovidInRussia\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/test.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <recent_temporary>\r\n      <list>\r\n        <item itemvalue=\"Python.cam\" />\r\n        <item itemvalue=\"Python.test\" />\r\n        <item itemvalue=\"Python.menu\" />\r\n        <item itemvalue=\"Python.main\" />\r\n        <item itemvalue=\"Python.cam\" />\r\n      </list>\r\n    </recent_temporary>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"23b46b07-1fbf-41ad-a3bd-b630687e7de1\" name=\"Default Changelist\" comment=\"\" />\r\n      <created>1608834406759</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1608834406759</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00001\" summary=\"enemy\">\r\n      <created>1610302517055</created>\r\n      <option name=\"number\" value=\"00001\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1610302517055</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00002\" summary=\"попросили закоммитить - закоммитил\">\r\n      <created>1610558353296</created>\r\n      <option name=\"number\" value=\"00002\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1610558353296</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00003\" summary=\"ничо не работает, но я устал\">\r\n      <created>1610566216813</created>\r\n      <option name=\"number\" value=\"00003\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1610566216813</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00004\" summary=\"я с ума сойду\">\r\n      <created>1610641788289</created>\r\n      <option name=\"number\" value=\"00004\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00004\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1610641788289</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00005\" summary=\"я с ума сошёл\">\r\n      <created>1610683899385</created>\r\n      <option name=\"number\" value=\"00005\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00005\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1610683899385</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00006\" summary=\"я с ума сошёл? да\">\r\n      <created>1610798852222</created>\r\n      <option name=\"number\" value=\"00006\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00006\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1610798852222</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00007\" summary=\"Рабочие противники\">\r\n      <created>1610992531890</created>\r\n      <option name=\"number\" value=\"00007\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00007\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1610992531890</updated>\r\n    </task>\r\n    <option name=\"localTasksCounter\" value=\"8\" />\r\n    <servers />\r\n  </component>\r\n  <component name=\"Vcs.Log.Tabs.Properties\">\r\n    <option name=\"TAB_STATES\">\r\n      <map>\r\n        <entry key=\"MAIN\">\r\n          <value>\r\n            <State />\r\n          </value>\r\n        </entry>\r\n      </map>\r\n    </option>\r\n    <option name=\"oldMeFiltersMigrated\" value=\"true\" />\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <MESSAGE value=\"enemy\" />\r\n    <MESSAGE value=\"попросили закоммитить - закоммитил\" />\r\n    <MESSAGE value=\"ничо не работает, но я устал\" />\r\n    <MESSAGE value=\"я с ума сойду\" />\r\n    <MESSAGE value=\"я с ума сошёл\" />\r\n    <MESSAGE value=\"я с ума сошёл? да\" />\r\n    <MESSAGE value=\"Рабочие противники\" />\r\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"Рабочие противники\" />\r\n  </component>\r\n  <component name=\"WindowStateProjectService\">\r\n    <state x=\"187\" y=\"229\" width=\"1653\" height=\"712\" key=\"#xdebugger.XInspectDialog\" timestamp=\"1610649396125\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"187\" y=\"229\" width=\"1653\" height=\"712\" key=\"#xdebugger.XInspectDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610649396125\" />\r\n    <state x=\"92\" y=\"92\" width=\"1736\" height=\"896\" key=\"DiffContextDialog\" timestamp=\"1610909275207\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"92\" y=\"92\" width=\"1736\" height=\"896\" key=\"DiffContextDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610909275207\" />\r\n    <state x=\"92\" y=\"92\" key=\"DiffContextDialog/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610683921915\" />\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.-1.bottom\" timestamp=\"1610564619097\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.-1.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564619097\" />\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.-1.center\" timestamp=\"1610564619097\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.-1.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564619097\" />\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.-1.left\" timestamp=\"1610564619097\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.-1.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564619097\" />\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.-1.right\" timestamp=\"1610564619097\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.-1.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564619097\" />\r\n    <state width=\"1897\" height=\"314\" key=\"GridCell.Tab.0.bottom\" timestamp=\"1610992603928\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state width=\"1897\" height=\"314\" key=\"GridCell.Tab.0.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610992603928\" />\r\n    <state width=\"1897\" height=\"310\" key=\"GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610823203448\" />\r\n    <state width=\"1897\" height=\"314\" key=\"GridCell.Tab.0.center\" timestamp=\"1610992603928\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state width=\"1897\" height=\"314\" key=\"GridCell.Tab.0.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610992603928\" />\r\n    <state width=\"1897\" height=\"310\" key=\"GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610823203448\" />\r\n    <state width=\"1897\" height=\"314\" key=\"GridCell.Tab.0.left\" timestamp=\"1610992603928\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state width=\"1897\" height=\"314\" key=\"GridCell.Tab.0.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610992603928\" />\r\n    <state width=\"1897\" height=\"310\" key=\"GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610823203448\" />\r\n    <state width=\"1897\" height=\"314\" key=\"GridCell.Tab.0.right\" timestamp=\"1610992603928\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state width=\"1897\" height=\"314\" key=\"GridCell.Tab.0.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610992603928\" />\r\n    <state width=\"1897\" height=\"310\" key=\"GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610823203448\" />\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.1.bottom\" timestamp=\"1610564617513\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.1.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564617513\" />\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.1.center\" timestamp=\"1610564617512\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.1.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564617512\" />\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.1.left\" timestamp=\"1610564617512\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.1.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564617512\" />\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.1.right\" timestamp=\"1610564617513\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"153\" height=\"281\" key=\"GridCell.Tab.1.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564617513\" />\r\n    <state x=\"184\" y=\"90\" key=\"MergeDialog\" timestamp=\"1610903318516\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"184\" y=\"90\" key=\"MergeDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610903318516\" />\r\n    <state x=\"598\" y=\"301\" key=\"MultipleFileMergeDialog\" timestamp=\"1610903318523\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"598\" y=\"301\" key=\"MultipleFileMergeDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610903318523\" />\r\n    <state x=\"92\" y=\"92\" width=\"1736\" height=\"896\" key=\"ShowDiffWithBranchDialog\" timestamp=\"1610641932729\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"92\" y=\"92\" width=\"1736\" height=\"896\" key=\"ShowDiffWithBranchDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610641932729\" />\r\n    <state x=\"552\" y=\"273\" key=\"Vcs.Push.Dialog.v2\" timestamp=\"1610992588835\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"552\" y=\"273\" key=\"Vcs.Push.Dialog.v2/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610992588835\" />\r\n    <state x=\"552\" y=\"273\" key=\"Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610683923435\" />\r\n    <state x=\"694\" y=\"274\" key=\"VcsDiffUtil.ChangesDialog\" timestamp=\"1610908946781\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"694\" y=\"274\" key=\"VcsDiffUtil.ChangesDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610908946781\" />\r\n    <state width=\"968\" height=\"548\" key=\"XDebugger.FullValuePopup\" timestamp=\"1610649589407\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state width=\"968\" height=\"548\" key=\"XDebugger.FullValuePopup/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610649589407\" />\r\n    <state x=\"777\" y=\"454\" key=\"com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2\" timestamp=\"1610902708586\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"777\" y=\"454\" key=\"com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610902708586\" />\r\n    <state x=\"777\" y=\"454\" key=\"com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610823666380\" />\r\n    <state x=\"1038\" y=\"632\" width=\"935\" height=\"403\" key=\"dock-window-1\" timestamp=\"1610564694529\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"1038\" y=\"632\" width=\"935\" height=\"403\" key=\"dock-window-1/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564694529\" />\r\n    <state x=\"710\" y=\"517\" width=\"934\" height=\"375\" key=\"dock-window-2\" timestamp=\"1610564694529\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"710\" y=\"517\" width=\"934\" height=\"375\" key=\"dock-window-2/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564694529\" />\r\n    <state x=\"1003\" y=\"618\" width=\"933\" height=\"347\" key=\"dock-window-3\" timestamp=\"1610564694529\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"1003\" y=\"618\" width=\"933\" height=\"347\" key=\"dock-window-3/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564694529\" />\r\n    <state x=\"844\" y=\"828\" width=\"932\" height=\"319\" key=\"dock-window-4\" timestamp=\"1610564694529\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"844\" y=\"828\" width=\"932\" height=\"319\" key=\"dock-window-4/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564694529\" />\r\n    <state x=\"484\" y=\"444\" width=\"170\" height=\"376\" key=\"dock-window-5\" timestamp=\"1610564694529\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"484\" y=\"444\" width=\"170\" height=\"376\" key=\"dock-window-5/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564694529\" />\r\n    <state x=\"913\" y=\"551\" width=\"169\" height=\"348\" key=\"dock-window-6\" timestamp=\"1610564694529\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"913\" y=\"551\" width=\"169\" height=\"348\" key=\"dock-window-6/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610564694529\" />\r\n    <state x=\"740\" y=\"253\" key=\"git4idea.branch.GitSmartOperationDialog\" timestamp=\"1610992602021\">\r\n      <screen x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />\r\n    </state>\r\n    <state x=\"740\" y=\"253\" key=\"git4idea.branch.GitSmartOperationDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610992602021\" />\r\n    <state x=\"740\" y=\"253\" key=\"git4idea.branch.GitSmartOperationDialog/0.0.1920.1080@0.0.1920.1080\" timestamp=\"1610823055893\" />\r\n  </component>\r\n  <component name=\"XDebuggerManager\">\r\n    <breakpoint-manager>\r\n      <breakpoints>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/cam.py</url>\r\n          <line>356</line>\r\n          <option name=\"timeStamp\" value=\"5\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/cam.py</url>\r\n          <line>30</line>\r\n          <option name=\"timeStamp\" value=\"6\" />\r\n        </line-breakpoint>\r\n      </breakpoints>\r\n    </breakpoint-manager>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/workspace.xml	(revision e7056fe161a4117d9a6c7d6886307610d2d83e97)
++++ .idea/workspace.xml	(date 1610994467823)
+@@ -19,38 +19,32 @@
+     <select />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="23b46b07-1fbf-41ad-a3bd-b630687e7de1" name="Default Changelist" comment="Рабочие противники" />
++    <list default="true" id="b3fd6f91-9962-486f-ac98-c58ee0c11f4e" name="Default Changelist" comment="">
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/cam.py" beforeDir="false" afterPath="$PROJECT_DIR$/cam.py" afterDir="false" />
++    </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+     <option name="LAST_RESOLUTION" value="IGNORE" />
+   </component>
+-  <component name="FileTemplateManagerImpl">
+-    <option name="RECENT_TEMPLATES">
+-      <list>
+-        <option value="Python Script" />
+-      </list>
+-    </option>
+-  </component>
+   <component name="Git.Settings">
+     <option name="RECENT_BRANCH_BY_REPOSITORY">
+       <map>
+-        <entry key="$PROJECT_DIR$" value="sh1sh4_dev" />
++        <entry key="$PROJECT_DIR$" value="master" />
+       </map>
+     </option>
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+-    <option name="UPDATE_TYPE" value="REBASE" />
+   </component>
+-  <component name="ProjectId" id="1m7AlXfpPcdUvYZRqqEjItlOJHg" />
++  <component name="ProjectId" id="1nFjoC8chWIJK0nHAjGaq1sptED" />
+   <component name="ProjectViewState">
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+   </component>
+   <component name="PropertiesComponent">
+     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+-    <property name="ignore_missing_gitignore" value="true" />
+   </component>
+-  <component name="RunManager" selected="Python.cam">
++  <component name="RunManager">
+     <configuration name="cam" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+       <option name="INTERPRETER_OPTIONS" value="" />
+       <option name="PARENT_ENVS" value="true" />
+@@ -72,138 +66,22 @@
+       <option name="INPUT_FILE" value="" />
+       <method v="2" />
+     </configuration>
+-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+-      <module name="CovidInRussia" />
+-      <option name="INTERPRETER_OPTIONS" value="" />
+-      <option name="PARENT_ENVS" value="true" />
+-      <envs>
+-        <env name="PYTHONUNBUFFERED" value="1" />
+-      </envs>
+-      <option name="SDK_HOME" value="" />
+-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+-      <option name="IS_MODULE_SDK" value="true" />
+-      <option name="ADD_CONTENT_ROOTS" value="true" />
+-      <option name="ADD_SOURCE_ROOTS" value="true" />
+-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+-      <option name="PARAMETERS" value="" />
+-      <option name="SHOW_COMMAND_LINE" value="false" />
+-      <option name="EMULATE_TERMINAL" value="false" />
+-      <option name="MODULE_MODE" value="false" />
+-      <option name="REDIRECT_INPUT" value="false" />
+-      <option name="INPUT_FILE" value="" />
+-      <method v="2" />
+-    </configuration>
+-    <configuration name="menu" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+-      <module name="CovidInRussia" />
+-      <option name="INTERPRETER_OPTIONS" value="" />
+-      <option name="PARENT_ENVS" value="true" />
+-      <envs>
+-        <env name="PYTHONUNBUFFERED" value="1" />
+-      </envs>
+-      <option name="SDK_HOME" value="C:\Users\SH1SH4\PycharmProjects\untitled2\venv\Scripts\python.exe" />
+-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+-      <option name="IS_MODULE_SDK" value="false" />
+-      <option name="ADD_CONTENT_ROOTS" value="true" />
+-      <option name="ADD_SOURCE_ROOTS" value="true" />
+-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/menu.py" />
+-      <option name="PARAMETERS" value="" />
+-      <option name="SHOW_COMMAND_LINE" value="false" />
+-      <option name="EMULATE_TERMINAL" value="false" />
+-      <option name="MODULE_MODE" value="false" />
+-      <option name="REDIRECT_INPUT" value="false" />
+-      <option name="INPUT_FILE" value="" />
+-      <method v="2" />
+-    </configuration>
+-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+-      <module name="CovidInRussia" />
+-      <option name="INTERPRETER_OPTIONS" value="" />
+-      <option name="PARENT_ENVS" value="true" />
+-      <envs>
+-        <env name="PYTHONUNBUFFERED" value="1" />
+-      </envs>
+-      <option name="SDK_HOME" value="" />
+-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+-      <option name="IS_MODULE_SDK" value="true" />
+-      <option name="ADD_CONTENT_ROOTS" value="true" />
+-      <option name="ADD_SOURCE_ROOTS" value="true" />
+-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+-      <option name="PARAMETERS" value="" />
+-      <option name="SHOW_COMMAND_LINE" value="false" />
+-      <option name="EMULATE_TERMINAL" value="false" />
+-      <option name="MODULE_MODE" value="false" />
+-      <option name="REDIRECT_INPUT" value="false" />
+-      <option name="INPUT_FILE" value="" />
+-      <method v="2" />
+-    </configuration>
+     <recent_temporary>
+       <list>
+         <item itemvalue="Python.cam" />
+-        <item itemvalue="Python.test" />
+-        <item itemvalue="Python.menu" />
+-        <item itemvalue="Python.main" />
+-        <item itemvalue="Python.cam" />
+       </list>
+     </recent_temporary>
+   </component>
+   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+   <component name="TaskManager">
+-    <task active="true" id="Default" summary="Default task">
+-      <changelist id="23b46b07-1fbf-41ad-a3bd-b630687e7de1" name="Default Changelist" comment="" />
+-      <created>1608834406759</created>
+-      <option name="number" value="Default" />
+-      <option name="presentableId" value="Default" />
+-      <updated>1608834406759</updated>
+-    </task>
+-    <task id="LOCAL-00001" summary="enemy">
+-      <created>1610302517055</created>
++    <task id="LOCAL-00001" summary="Clear repo">
++      <created>1610993017155</created>
+       <option name="number" value="00001" />
+       <option name="presentableId" value="LOCAL-00001" />
+       <option name="project" value="LOCAL" />
+-      <updated>1610302517055</updated>
+-    </task>
+-    <task id="LOCAL-00002" summary="попросили закоммитить - закоммитил">
+-      <created>1610558353296</created>
+-      <option name="number" value="00002" />
+-      <option name="presentableId" value="LOCAL-00002" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1610558353296</updated>
+-    </task>
+-    <task id="LOCAL-00003" summary="ничо не работает, но я устал">
+-      <created>1610566216813</created>
+-      <option name="number" value="00003" />
+-      <option name="presentableId" value="LOCAL-00003" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1610566216813</updated>
+-    </task>
+-    <task id="LOCAL-00004" summary="я с ума сойду">
+-      <created>1610641788289</created>
+-      <option name="number" value="00004" />
+-      <option name="presentableId" value="LOCAL-00004" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1610641788289</updated>
+-    </task>
+-    <task id="LOCAL-00005" summary="я с ума сошёл">
+-      <created>1610683899385</created>
+-      <option name="number" value="00005" />
+-      <option name="presentableId" value="LOCAL-00005" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1610683899385</updated>
+-    </task>
+-    <task id="LOCAL-00006" summary="я с ума сошёл? да">
+-      <created>1610798852222</created>
+-      <option name="number" value="00006" />
+-      <option name="presentableId" value="LOCAL-00006" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1610798852222</updated>
++      <updated>1610993017155</updated>
+     </task>
+-    <task id="LOCAL-00007" summary="Рабочие противники">
+-      <created>1610992531890</created>
+-      <option name="number" value="00007" />
+-      <option name="presentableId" value="LOCAL-00007" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1610992531890</updated>
+-    </task>
+-    <option name="localTasksCounter" value="8" />
++    <option name="localTasksCounter" value="2" />
+     <servers />
+   </component>
+   <component name="Vcs.Log.Tabs.Properties">
+@@ -219,151 +97,41 @@
+     <option name="oldMeFiltersMigrated" value="true" />
+   </component>
+   <component name="VcsManagerConfiguration">
+-    <MESSAGE value="enemy" />
+-    <MESSAGE value="попросили закоммитить - закоммитил" />
+-    <MESSAGE value="ничо не работает, но я устал" />
+-    <MESSAGE value="я с ума сойду" />
+-    <MESSAGE value="я с ума сошёл" />
+-    <MESSAGE value="я с ума сошёл? да" />
+-    <MESSAGE value="Рабочие противники" />
+-    <option name="LAST_COMMIT_MESSAGE" value="Рабочие противники" />
++    <MESSAGE value="Clear repo" />
++    <option name="LAST_COMMIT_MESSAGE" value="Clear repo" />
+   </component>
+   <component name="WindowStateProjectService">
+-    <state x="187" y="229" width="1653" height="712" key="#xdebugger.XInspectDialog" timestamp="1610649396125">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="187" y="229" width="1653" height="712" key="#xdebugger.XInspectDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610649396125" />
+-    <state x="92" y="92" width="1736" height="896" key="DiffContextDialog" timestamp="1610909275207">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="92" y="92" width="1736" height="896" key="DiffContextDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610909275207" />
+-    <state x="92" y="92" key="DiffContextDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1610683921915" />
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.bottom" timestamp="1610564619097">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564619097" />
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.center" timestamp="1610564619097">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564619097" />
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.left" timestamp="1610564619097">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564619097" />
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.right" timestamp="1610564619097">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564619097" />
+-    <state width="1897" height="314" key="GridCell.Tab.0.bottom" timestamp="1610992603928">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state width="1897" height="314" key="GridCell.Tab.0.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992603928" />
+-    <state width="1897" height="310" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1610823203448" />
+-    <state width="1897" height="314" key="GridCell.Tab.0.center" timestamp="1610992603928">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state width="1897" height="314" key="GridCell.Tab.0.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992603928" />
+-    <state width="1897" height="310" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1610823203448" />
+-    <state width="1897" height="314" key="GridCell.Tab.0.left" timestamp="1610992603928">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state width="1897" height="314" key="GridCell.Tab.0.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992603928" />
+-    <state width="1897" height="310" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1610823203448" />
+-    <state width="1897" height="314" key="GridCell.Tab.0.right" timestamp="1610992603928">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state width="1897" height="314" key="GridCell.Tab.0.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992603928" />
+-    <state width="1897" height="310" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1610823203448" />
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.bottom" timestamp="1610564617513">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564617513" />
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.center" timestamp="1610564617512">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564617512" />
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.left" timestamp="1610564617512">
++    <state x="92" y="92" width="1736" height="896" key="DiffContextDialog" timestamp="1610993567766">
+       <screen x="0" y="0" width="1920" height="1080" />
+     </state>
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564617512" />
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.right" timestamp="1610564617513">
++    <state x="92" y="92" width="1736" height="896" key="DiffContextDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610993567766" />
++    <state width="1897" height="295" key="GridCell.Tab.0.bottom" timestamp="1610994435019">
+       <screen x="0" y="0" width="1920" height="1080" />
+     </state>
+-    <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564617513" />
+-    <state x="184" y="90" key="MergeDialog" timestamp="1610903318516">
++    <state width="1897" height="295" key="GridCell.Tab.0.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610994435019" />
++    <state width="1897" height="295" key="GridCell.Tab.0.center" timestamp="1610994435018">
+       <screen x="0" y="0" width="1920" height="1080" />
+     </state>
+-    <state x="184" y="90" key="MergeDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610903318516" />
+-    <state x="598" y="301" key="MultipleFileMergeDialog" timestamp="1610903318523">
++    <state width="1897" height="295" key="GridCell.Tab.0.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610994435018" />
++    <state width="1897" height="295" key="GridCell.Tab.0.left" timestamp="1610994435018">
+       <screen x="0" y="0" width="1920" height="1080" />
+     </state>
+-    <state x="598" y="301" key="MultipleFileMergeDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610903318523" />
+-    <state x="92" y="92" width="1736" height="896" key="ShowDiffWithBranchDialog" timestamp="1610641932729">
++    <state width="1897" height="295" key="GridCell.Tab.0.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610994435018" />
++    <state width="1897" height="295" key="GridCell.Tab.0.right" timestamp="1610994435018">
+       <screen x="0" y="0" width="1920" height="1080" />
+     </state>
+-    <state x="92" y="92" width="1736" height="896" key="ShowDiffWithBranchDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610641932729" />
+-    <state x="552" y="273" key="Vcs.Push.Dialog.v2" timestamp="1610992588835">
++    <state width="1897" height="295" key="GridCell.Tab.0.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610994435018" />
++    <state x="192" y="0" width="1552" height="1080" key="MergeDialog" timestamp="1610993232489">
+       <screen x="0" y="0" width="1920" height="1080" />
+     </state>
+-    <state x="552" y="273" key="Vcs.Push.Dialog.v2/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992588835" />
+-    <state x="552" y="273" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1610683923435" />
+-    <state x="694" y="274" key="VcsDiffUtil.ChangesDialog" timestamp="1610908946781">
++    <state x="192" y="0" width="1552" height="1080" key="MergeDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610993232489" />
++    <state x="598" y="301" key="MultipleFileMergeDialog" timestamp="1610993232504">
+       <screen x="0" y="0" width="1920" height="1080" />
+     </state>
+-    <state x="694" y="274" key="VcsDiffUtil.ChangesDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610908946781" />
+-    <state width="968" height="548" key="XDebugger.FullValuePopup" timestamp="1610649589407">
++    <state x="598" y="301" key="MultipleFileMergeDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610993232504" />
++    <state x="606" y="274" key="VcsDiffUtil.ChangesDialog" timestamp="1610993338563">
+       <screen x="0" y="0" width="1920" height="1080" />
+     </state>
+-    <state width="968" height="548" key="XDebugger.FullValuePopup/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610649589407" />
+-    <state x="777" y="454" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1610902708586">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="777" y="454" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610902708586" />
+-    <state x="777" y="454" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1080@0.0.1920.1080" timestamp="1610823666380" />
+-    <state x="1038" y="632" width="935" height="403" key="dock-window-1" timestamp="1610564694529">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="1038" y="632" width="935" height="403" key="dock-window-1/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564694529" />
+-    <state x="710" y="517" width="934" height="375" key="dock-window-2" timestamp="1610564694529">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="710" y="517" width="934" height="375" key="dock-window-2/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564694529" />
+-    <state x="1003" y="618" width="933" height="347" key="dock-window-3" timestamp="1610564694529">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="1003" y="618" width="933" height="347" key="dock-window-3/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564694529" />
+-    <state x="844" y="828" width="932" height="319" key="dock-window-4" timestamp="1610564694529">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="844" y="828" width="932" height="319" key="dock-window-4/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564694529" />
+-    <state x="484" y="444" width="170" height="376" key="dock-window-5" timestamp="1610564694529">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="484" y="444" width="170" height="376" key="dock-window-5/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564694529" />
+-    <state x="913" y="551" width="169" height="348" key="dock-window-6" timestamp="1610564694529">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="913" y="551" width="169" height="348" key="dock-window-6/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564694529" />
+-    <state x="740" y="253" key="git4idea.branch.GitSmartOperationDialog" timestamp="1610992602021">
+-      <screen x="0" y="0" width="1920" height="1080" />
+-    </state>
+-    <state x="740" y="253" key="git4idea.branch.GitSmartOperationDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992602021" />
+-    <state x="740" y="253" key="git4idea.branch.GitSmartOperationDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1610823055893" />
+-  </component>
+-  <component name="XDebuggerManager">
+-    <breakpoint-manager>
+-      <breakpoints>
+-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+-          <url>file://$PROJECT_DIR$/cam.py</url>
+-          <line>356</line>
+-          <option name="timeStamp" value="5" />
+-        </line-breakpoint>
+-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+-          <url>file://$PROJECT_DIR$/cam.py</url>
+-          <line>30</line>
+-          <option name="timeStamp" value="6" />
+-        </line-breakpoint>
+-      </breakpoints>
+-    </breakpoint-manager>
++    <state x="606" y="274" key="VcsDiffUtil.ChangesDialog/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610993338563" />
+   </component>
+ </project>
+\ No newline at end of file

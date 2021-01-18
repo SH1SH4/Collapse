@@ -19,7 +19,18 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="23b46b07-1fbf-41ad-a3bd-b630687e7de1" name="Default Changelist" comment="Рабочие противники" />
+    <list default="true" id="b3fd6f91-9962-486f-ac98-c58ee0c11f4e" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_10_01_2021_21_19__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_10_01_2021_21_19__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_12_01_2021_19_11__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_12_01_2021_19_11__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_12_01_2021_19_17__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_12_01_2021_19_17__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_16_01_2021_21_50__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_16_01_2021_21_50__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_17_01_2021_19_58__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_17_01_2021_19_58__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_18_01_2021_20_56__Default_Changelist_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Merge_at_12_01_2021_19_21__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Merge_at_12_01_2021_19_21__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_09_01_2021_0_06__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_09_01_2021_0_06__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cam.py" beforeDir="false" afterPath="$PROJECT_DIR$/cam.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -42,6 +53,7 @@
     <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="ProjectId" id="1m7AlXfpPcdUvYZRqqEjItlOJHg" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -148,7 +160,7 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="23b46b07-1fbf-41ad-a3bd-b630687e7de1" name="Default Changelist" comment="" />
+      <changelist id="b3fd6f91-9962-486f-ac98-c58ee0c11f4e" name="Default Changelist" comment="" />
       <created>1608834406759</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -254,25 +266,25 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="913" y="551" width="153" height="281" key="GridCell.Tab.-1.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610564619097" />
-    <state width="1897" height="314" key="GridCell.Tab.0.bottom" timestamp="1610992603928">
+    <state width="1897" height="316" key="GridCell.Tab.0.bottom" timestamp="1610995407665">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1897" height="314" key="GridCell.Tab.0.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992603928" />
+    <state width="1897" height="316" key="GridCell.Tab.0.bottom/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610995407665" />
     <state width="1897" height="310" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1610823203448" />
-    <state width="1897" height="314" key="GridCell.Tab.0.center" timestamp="1610992603928">
+    <state width="1897" height="316" key="GridCell.Tab.0.center" timestamp="1610995407665">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1897" height="314" key="GridCell.Tab.0.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992603928" />
+    <state width="1897" height="316" key="GridCell.Tab.0.center/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610995407665" />
     <state width="1897" height="310" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1610823203448" />
-    <state width="1897" height="314" key="GridCell.Tab.0.left" timestamp="1610992603928">
+    <state width="1897" height="316" key="GridCell.Tab.0.left" timestamp="1610995407665">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1897" height="314" key="GridCell.Tab.0.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992603928" />
+    <state width="1897" height="316" key="GridCell.Tab.0.left/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610995407665" />
     <state width="1897" height="310" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1610823203448" />
-    <state width="1897" height="314" key="GridCell.Tab.0.right" timestamp="1610992603928">
+    <state width="1897" height="316" key="GridCell.Tab.0.right" timestamp="1610995407665">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1897" height="314" key="GridCell.Tab.0.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610992603928" />
+    <state width="1897" height="316" key="GridCell.Tab.0.right/-1360.547.1360.768/0.0.1920.1080@0.0.1920.1080" timestamp="1610995407665" />
     <state width="1897" height="310" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1610823203448" />
     <state x="913" y="551" width="153" height="281" key="GridCell.Tab.1.bottom" timestamp="1610564617513">
       <screen x="0" y="0" width="1920" height="1080" />
@@ -355,7 +367,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cam.py</url>
-          <line>356</line>
+          <line>359</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
