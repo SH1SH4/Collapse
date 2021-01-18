@@ -5,6 +5,7 @@ from random import randint
 import pytmx
 import pyscroll
 from pytmx.util_pygame import load_pygame
+
 pygame.init()
 
 pygame.display.set_caption("Start")
@@ -39,7 +40,7 @@ main_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Вол
 hit = pygame.mixer.Sound('sound/hit3.wav')
 regen = pygame.mixer.Sound('sound/successful_hit.wav')
 stamina_png = pygame.transform.scale(load_image('stamina.png'), (30, 500))
-SPEED_HERO = 5
+SPEED_HERO = 3
 enemy = pygame.sprite.Group()
 
 
@@ -95,7 +96,8 @@ class Map:
             for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
                 next_x, next_y = x + dx, y + dy
                 if 0 <= next_x < 39 and 0 <= next_y < 39 and \
-                        self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:
+                        self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][
+                    next_x] == INF:
                     distance[next_y][next_x] = distance[y][x] + 1
                     prev[next_y][next_x] = (x, y)
                     queue.append((next_x, next_y))
@@ -234,52 +236,124 @@ class Hero(pygame.sprite.Sprite):
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
             if self.run_channel is None or not self.run_channel.get_busy():
                 self.run_channel = run.play()
+        if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
 
-        if key[pygame.K_LEFT]:
-            self.rect.x -= SPEED_HERO
-            self.animation_left()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x += SPEED_HERO
-        if key[pygame.K_RIGHT]:
-            self.rect.x += SPEED_HERO
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x -= SPEED_HERO
-        if key[pygame.K_UP]:
-            self.rect.y -= SPEED_HERO
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.y += SPEED_HERO
-        if key[pygame.K_DOWN]:
-            self.rect.y += SPEED_HERO
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.y -= SPEED_HERO
-        if key[pygame.K_a]:
-            self.rect.x -= SPEED_HERO
-            self.animation_left()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x += SPEED_HERO
-        if key[pygame.K_d]:
-            self.rect.x += SPEED_HERO
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.x -= SPEED_HERO
-        if key[pygame.K_w]:
-            self.rect.y -= SPEED_HERO
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.y += SPEED_HERO
-        if key[pygame.K_s]:
-            self.rect.y += SPEED_HERO
-            self.animation()
-            if pygame.sprite.spritecollideany(self, obstacles):
-                self.rect.y -= SPEED_HERO
-        if key[pygame.K_MINUS]:
-            self.hp_health -= 1
-            print(self.hp_health)
-            self.hp_hero(self.hp_health)
+            if key[pygame.K_LEFT]:
+                if key[pygame.K_LSHIFT]:
+                    self.rect.x -= SPEED_HERO + (self.razgon * 2)
+                    self.animation_left()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x += SPEED_HERO + (self.razgon * 2)
+                        self.razgon = 0
+                else:
+                    self.rect.x -= SPEED_HERO + self.razgon
+                    self.animation_left()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x += SPEED_HERO + self.razgon
+                        self.razgon = 0
+            if key[pygame.K_RIGHT]:
+                if key[pygame.K_LSHIFT]:
+                    self.rect.x += SPEED_HERO + (self.razgon * 2)
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x -= SPEED_HERO + (self.razgon * 2)
+                        self.razgon = 0
+                else:
+                    self.rect.x += SPEED_HERO + self.razgon
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x -= SPEED_HERO + self.razgon
+                        self.razgon = 0
+            if key[pygame.K_UP]:
+                if key[pygame.K_LSHIFT]:
+                    self.rect.y -= SPEED_HERO + (self.razgon * 2)
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y += SPEED_HERO + (self.razgon * 2)
+                        self.razgon = 0
+                else:
+                    self.rect.y -= SPEED_HERO + self.razgon
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y += SPEED_HERO + self.razgon
+                        self.razgon = 0
 
+            if key[pygame.K_DOWN]:
+                if key[pygame.K_LSHIFT]:
+                    self.rect.y += SPEED_HERO + (self.razgon * 2)
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y -= SPEED_HERO + (self.razgon * 2)
+                        self.razgon = 0
+                else:
+                    self.rect.y += SPEED_HERO + self.razgon
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y -= SPEED_HERO + self.razgon
+                        self.razgon = 0
+            if key[pygame.K_a]:
+                if key[pygame.K_LSHIFT]:
+                    self.rect.x -= SPEED_HERO + (self.razgon * 2)
+                    self.animation_left()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x += SPEED_HERO + (self.razgon * 2)
+                        self.razgon = 0
+                else:
+                    self.rect.x -= SPEED_HERO + self.razgon
+                    self.animation_left()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x += SPEED_HERO + self.razgon
+                        self.razgon = 0
+            if key[pygame.K_d]:
+                if key[pygame.K_LSHIFT]:
+                    self.rect.x += SPEED_HERO + (self.razgon * 2)
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x -= SPEED_HERO + (self.razgon * 2)
+                        self.razgon = 0
+                else:
+                    self.rect.x += SPEED_HERO + self.razgon
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x -= SPEED_HERO + self.razgon
+                        self.razgon = 0
+            if key[pygame.K_w]:
+                if key[pygame.K_LSHIFT]:
+                    self.rect.y -= SPEED_HERO + (self.razgon * 2)
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y += SPEED_HERO + (self.razgon * 2)
+                        self.razgon = 0
+                else:
+                    self.rect.y -= SPEED_HERO + self.razgon
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y += SPEED_HERO + self.razgon
+                        self.razgon = 0
+            if key[pygame.K_s]:
+                if key[pygame.K_LSHIFT]:
+                    self.rect.y += SPEED_HERO + (self.razgon * 2)
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y -= SPEED_HERO + (self.razgon * 2)
+                        self.razgon = 0
+                else:
+                    self.rect.y += SPEED_HERO + self.razgon
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y -= SPEED_HERO + self.razgon
+                        self.razgon = 0
+            if key[pygame.K_MINUS]:
+                self.hp_health -= 1
+                print(self.hp_health)
+                self.hp_hero(self.hp_health)
+            if not TICK % 21:
+                if self.razgon == 6:
+                    pass
+                else:
+                    self.razgon += 1
+        else:
+            self.razgon = 0
 
     def hp_hero(self, health):
         self.remove(heart)
@@ -294,6 +368,7 @@ class Hero(pygame.sprite.Sprite):
             stamina_hero = Stamina(self.stamina, stamina_png)
         else:
             game_over()
+
 
 def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text.ttf"):
     font_type = pygame.font.Font(font_type, font_size)
@@ -329,6 +404,7 @@ class Enemy(pygame.sprite.Sprite):
                 frame_location = (self.rect.w * i, self.rect.h * j)
                 self.frames.append(sheet.subsurface(
                     pygame.Rect(frame_location, self.rect.size)))
+
 
 class Stamina(pygame.sprite.Sprite):
     def __init__(self, stamina, stamina_screen):
@@ -443,5 +519,6 @@ def start_game():
         pygame.display.flip()
 
     pygame.quit()
+
 
 start_screen()
