@@ -35,7 +35,7 @@ class Map:
         self.hero = hero
 
     def find_path(self, start, target):
-        # pix_move = 5
+        # pix_move = 16
         # move = [0, 0]
         # xs, ys = start
         # xt, yt = target
@@ -58,10 +58,14 @@ class Map:
         if fix_start == fix_target:
             return fix_start
         # 0ая координата карты противника по отношению к основной карте
-        zero_coord = abs(fix_start[0] - 20), abs(fix_start[1] - 20)
+        zero_coord = fix_start[0] - 19, fix_start[1] - 19
+        zero_coord_abs = list(map(abs, zero_coord))
+        # print(zero_coord, zero_coord_abs)
         # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        # if fix_target[0] - zero_coord[0] < 0 and fix_target[1] - zero_coord[1] < 0:
-        #     return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
+        if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+            print('random')
+            return start
+            # return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
         x = 19
         y = 19
         distance = [[INF] * 39 for _ in range(39)]
@@ -78,30 +82,32 @@ class Map:
                     prev[next_y][next_x] = (x, y)
                     queue.append((next_x, next_y))
 
-        x, y = fix_target[0] - zero_coord[0], fix_target[1] - zero_coord[1]
+        x, y = fix_target[0] - zero_coord_abs[0], fix_target[1] - zero_coord_abs[1]
         # print(fix_target)
         # print(fix_start)
         # print(x - zero_coord[0], y - zero_coord[1])
-        print('сдвиг', zero_coord)
-        print('старт', fix_start)
-        print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
-        print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
-        print('target с свдигом', x, y)
+        # print('------')
+        # print('сдвиг', zero_coord)
+        # print('старт', fix_start)
+        # print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
+        # print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
+        # print('target с свдигом', x, y)
         # for i, ev in enumerate(distance):
         #     print(i, ev)
         # for i, ev in enumerate(prev):
         #     print(i, ev)
-        if not 38 >= y - zero_coord[1] >= 0 or not 38 >= x - zero_coord[0] >= 0:
-            return start
-        if distance[y - zero_coord[1]][x - zero_coord[0]] == INF:
+        if distance[y][x] == INF:
+            print('return start')
             return start
         while prev[y][x] != (19, 19):
             if prev[y][x] == None:
+                print('ноне')
                 return start
             x, y = prev[y][x]
-
-        print('куда идём', x, y)
-        return (x + zero_coord[0]) * self.tile_size, (y + zero_coord[1]) * self.tile_size
+            print(x, y)
+        print('откуда идём', start[0], start[1])
+        print('куда идём', (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size)
+        return (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size
 
     def render(self):
         for y in range(self.height):
@@ -109,10 +115,10 @@ class Map:
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,
                               y * self.tile_size)
-        for i in range(1):
+        for _ in range(20):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((23 * self.tile_size, 27 * self.tile_size), load_image("llama (1).png"), 3, 2,
+                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2,
                       self.hero)
 
     def get_tile_id(self, position):
@@ -259,42 +265,16 @@ class Enemy(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
         self.rect.x, self.rect.y = position
         self.delay = 0
-        self.add(enemyx)
+        self.add(enemy)
         self.hero = hero
 
     def update(self, world, delta_time):
-        next_position = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
-        self.rect.x, self.rect.y = next_position
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
-                self.rect.y -= self.speed
-
-
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self, position, sheet, columns, rows, hero):
-        pygame.sprite.Sprite.__init__(self, group)
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect.x, self.rect.y = position
-        self.delay = 0
-        self.add(enemyx)
-        self.hero = hero
-
-    def update(self, world, delta_time):
-        # global TICK
-        # if not TICK % 2:
-        next_position = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
-        old = (self.rect.x, self.rect.y)
-        self.rect.x, self.rect.y = next_position
-        if pygame.sprite.spritecollideany(self, obstacles):
-            self.rect.x, self.rect.y = old
+        if not TICK % 7:
+            next_step = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
+            print(f'''---
+{next_step}
+---''')
+            self.rect.x, self.rect.y = next_step
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
@@ -304,7 +284,6 @@ class Enemy(pygame.sprite.Sprite):
                 frame_location = (self.rect.w * i, self.rect.h * j)
                 self.frames.append(sheet.subsurface(
                     pygame.Rect(frame_location, self.rect.size)))
-
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -376,9 +355,10 @@ def game_over():
 
 
 def start_game():
+    global TICK
     running = True
     screen.fill((0, 0, 0))
-    hero = Hero((32, 32), load_image("llama (1).png"), 3, 2)
+    hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("poligon2.0.tmx", [30, 15], hero)
     world.render()
     fps = 60
@@ -395,7 +375,7 @@ def start_game():
         if keys[pygame.K_r]:
             game_over()
         obstacles.update()
-        enemyx.update(world, delta_time)
+        enemy.update(world, delta_time)
         group.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
