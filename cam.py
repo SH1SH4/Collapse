@@ -182,7 +182,7 @@ class Button:
 
 
 class Hero(pygame.sprite.Sprite):
-    def __init__(self, position, sheet, sheet_left, columns, rows):
+    def __init__(self, position, sheet, sheet_left, columns, rows, hp):
         pygame.sprite.Sprite.__init__(self, group)
 
         self.frames = []
@@ -275,12 +275,16 @@ class Hero(pygame.sprite.Sprite):
             self.animation()
             if pygame.sprite.spritecollideany(self, obstacles):
                 self.rect.y -= SPEED_HERO
+        if key[pygame.K_MINUS]:
+            self.hp_health -= 1
+            print(self.hp_health)
+            self.hp_hero(self.hp_health)
 
 
     def hp_hero(self, health):
         self.remove(heart)
-        if health > 0 and health <= 10:
-            for i in range(1, 10 + 1):
+        if health > 0:
+            for i in range(1, 11):
                 if i <= health:
                     hp = HP((pygame.transform.scale(load_image('heart.png'), (30, 30))), i)
                 else:
@@ -289,7 +293,7 @@ class Hero(pygame.sprite.Sprite):
                         (30, 30))), i)
             stamina_hero = Stamina(self.stamina, stamina_png)
         else:
-            exit()
+            game_over()
 
 def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text.ttf"):
     font_type = pygame.font.Font(font_type, font_size)
@@ -337,7 +341,6 @@ class Stamina(pygame.sprite.Sprite):
 
 class HP(pygame.sprite.Sprite):
     def __init__(self, sheet, health):
-        print(health)
         super().__init__(heart)
         self.image = sheet
         self.rect = self.image.get_rect()
@@ -392,6 +395,8 @@ def pause():
 
 
 def game_over():
+    running = False
+    sound_theme.stop()
     over = True
     while over:
         for event in pygame.event.get():
@@ -410,7 +415,7 @@ def start_game():
     global TICK
     running = True
     screen.fill((0, 0, 0))
-    hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
+    hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2, 10)
     world = Map("poligon2.0.tmx", [30, 15], hero)
     main_menu_theme.stop()
     sound_theme.set_volume(0.3)
@@ -419,6 +424,7 @@ def start_game():
     clock = pygame.time.Clock()
     fps = 60
     clock = pygame.time.Clock()
+    print(hero.hp_health)
     while running:
         TICK += clock.tick()
         delta_time = clock.tick(fps) / 1000
@@ -428,8 +434,6 @@ def start_game():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
             pause()
-        if keys[pygame.K_r]:
-            game_over()
         obstacles.update()
         enemy.update(world, delta_time)
         group.update(world, delta_time)
