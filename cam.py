@@ -295,6 +295,7 @@ class Hero(pygame.sprite.Sprite):
         else:
             game_over()
 
+
 def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text.ttf"):
     font_type = pygame.font.Font(font_type, font_size)
     message = font_type.render(text, True, font_color)
@@ -329,6 +330,7 @@ class Enemy(pygame.sprite.Sprite):
                 frame_location = (self.rect.w * i, self.rect.h * j)
                 self.frames.append(sheet.subsurface(
                     pygame.Rect(frame_location, self.rect.size)))
+
 
 class Stamina(pygame.sprite.Sprite):
     def __init__(self, stamina, stamina_screen):
