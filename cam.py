@@ -5,6 +5,7 @@ from random import randint
 import pytmx
 import pyscroll
 from pytmx.util_pygame import load_pygame
+
 pygame.init()
 
 pygame.display.set_caption("Start")
@@ -53,79 +54,79 @@ class Map:
         self.hero = hero
 
     def find_path(self, start, target):
-        # pix_move = 16
-        # move = [0, 0]
-        # xs, ys = start
-        # xt, yt = target
-        # if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
-        #     move[0] += 1
-        # elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
-        #     move[0] -= 1
-        # if ys < yt and self.is_free((xs // 32, (ys + pix_move) // 32)):
-        #     move[1] += 1
-        # elif ys > yt and self.is_free((xs // 32, (ys - pix_move) // 32)):
-        #     move[1] -= 1
-        # # if xs // 32 == xt // 32:
-        # #     move[0] = 0
-        # # if ys // 32 == xt // 32:
-        # #     move[1] = 0
-        # return start[0] + pix_move * move[0], start[1] + pix_move * move[1]
-        INF = 1000
-        fix_start = start[0] // self.tile_size, start[1] // self.tile_size
-        fix_target = target[0] // self.tile_size, target[1] // self.tile_size
-        if fix_start == fix_target:
-            return fix_start
-        # 0ая координата карты противника по отношению к основной карте
-        zero_coord = fix_start[0] - 19, fix_start[1] - 19
-        zero_coord_abs = list(map(abs, zero_coord))
-        # print(zero_coord, zero_coord_abs)
-        # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
-            print('random')
-            return start
-            # return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
-        x = 19
-        y = 19
-        distance = [[INF] * 39 for _ in range(39)]
-        distance[19][19] = 0
-        prev = [[None] * 39 for _ in range(39)]
-        queue = [(x, y)]
-        while queue:
-            x, y = queue.pop(0)
-            for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
-                next_x, next_y = x + dx, y + dy
-                if 0 <= next_x < 39 and 0 <= next_y < 39 and \
-                        self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:
-                    distance[next_y][next_x] = distance[y][x] + 1
-                    prev[next_y][next_x] = (x, y)
-                    queue.append((next_x, next_y))
-
-        x, y = fix_target[0] - zero_coord_abs[0], fix_target[1] - zero_coord_abs[1]
-        # print(fix_target)
-        # print(fix_start)
-        # print(x - zero_coord[0], y - zero_coord[1])
-        # print('------')
-        # print('сдвиг', zero_coord)
-        # print('старт', fix_start)
-        # print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
-        # print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
-        # print('target с свдигом', x, y)
-        # for i, ev in enumerate(distance):
-        #     print(i, ev)
-        # for i, ev in enumerate(prev):
-        #     print(i, ev)
-        if distance[y][x] == INF:
-            print('return start')
-            return start
-        while prev[y][x] != (19, 19):
-            if prev[y][x] == None:
-                print('ноне')
-                return start
-            x, y = prev[y][x]
-            print(x, y)
-        print('откуда идём', start[0], start[1])
-        print('куда идём', (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size)
-        return (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size
+        pix_move = 16
+        move = [0, 0]
+        xs, ys = start
+        xt, yt = target
+        if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
+            move[0] += 1
+        elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
+            move[0] -= 1
+        if ys < yt and self.is_free((xs // 32, (ys + pix_move) // 32)):
+            move[1] += 1
+        elif ys > yt and self.is_free((xs // 32, (ys - pix_move) // 32)):
+            move[1] -= 1
+        if xs // 32 == xt // 32:
+            move[0] = 0
+        if ys // 32 == xt // 32:
+            move[1] = 0
+        return start[0] + pix_move * move[0], start[1] + pix_move * move[1]
+        # INF = 1000
+        # fix_start = start[0] // self.tile_size, start[1] // self.tile_size
+        # fix_target = target[0] // self.tile_size, target[1] // self.tile_size
+        # if fix_start == fix_target:
+        #     return fix_start
+        # # 0ая координата карты противника по отношению к основной карте
+        # zero_coord = fix_start[0] - 19, fix_start[1] - 19
+        # zero_coord_abs = list(map(abs, zero_coord))
+        # # print(zero_coord, zero_coord_abs)
+        # # Рандомное движение если герой далеко, нужно проверить свободен ли блок
+        # if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+        #     print('random')
+        #     return start
+        #     # return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
+        # x = 19
+        # y = 19
+        # distance = [[INF] * 39 for _ in range(39)]
+        # distance[19][19] = 0
+        # prev = [[None] * 39 for _ in range(39)]
+        # queue = [(x, y)]
+        # while queue:
+        #     x, y = queue.pop(0)
+        #     for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
+        #         next_x, next_y = x + dx, y + dy
+        #         if 0 <= next_x < 39 and 0 <= next_y < 39 and \
+        #                 self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:
+        #             distance[next_y][next_x] = distance[y][x] + 1
+        #             prev[next_y][next_x] = (x, y)
+        #             queue.append((next_x, next_y))
+        #
+        # x, y = fix_target[0] - zero_coord_abs[0], fix_target[1] - zero_coord_abs[1]
+        # # print(fix_target)
+        # # print(fix_start)
+        # # print(x - zero_coord[0], y - zero_coord[1])
+        # # print('------')
+        # # print('сдвиг', zero_coord)
+        # # print('старт', fix_start)
+        # # print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
+        # # print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
+        # # print('target с свдигом', x, y)
+        # # for i, ev in enumerate(distance):
+        # #     print(i, ev)
+        # # for i, ev in enumerate(prev):
+        # #     print(i, ev)
+        # if distance[y][x] == INF:
+        #     print('return start')
+        #     return start
+        # while prev[y][x] != (19, 19):
+        #     if prev[y][x] == None:
+        #         print('ноне')
+        #         return start
+        #     x, y = prev[y][x]
+        #     print(x, y)
+        # print('откуда идём', start[0], start[1])
+        # print('куда идём', (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size)
+        # return (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size
 
     def render(self):
         for y in range(self.height):
@@ -133,10 +134,11 @@ class Map:
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,
                               y * self.tile_size)
-        for _ in range(20):
+        for _ in range(1):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2,
+                Enemy((x * self.tile_size, y * self.tile_size), load_image("zombie.png"),
+                      load_image("zombie_left.png"), 2, 2,
                       self.hero)
 
     def get_tile_id(self, position):
@@ -172,8 +174,6 @@ class Button:
                 if name == "play":
                     start_game()
                     print("Ok")
-                if name == "new_game":
-                    print("New game")
                 if name == "exit":
                     pygame.quit()
                     quit()
@@ -182,7 +182,7 @@ class Button:
 
 
 class Hero(pygame.sprite.Sprite):
-    def __init__(self, position, sheet, sheet_left, columns, rows, hp):
+    def __init__(self, position, sheet, sheet_left, columns, rows):
         pygame.sprite.Sprite.__init__(self, group)
 
         self.frames = []
@@ -280,7 +280,6 @@ class Hero(pygame.sprite.Sprite):
             print(self.hp_health)
             self.hp_hero(self.hp_health)
 
-
     def hp_hero(self, health):
         self.remove(heart)
         if health > 0:
@@ -292,8 +291,6 @@ class Hero(pygame.sprite.Sprite):
                         'kisspng-broken-heart-computer-icons-clip-art-broken-or-splitted-heart-vector-5ae64d56110867.0049922915250425180698.png'),
                         (30, 30))), i)
             stamina_hero = Stamina(self.stamina, stamina_png)
-        else:
-            game_over()
 
 
 def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text.ttf"):
@@ -303,10 +300,12 @@ def print_text(text, x, y, font_size, font_color=(0, 0, 0), font_type="data/text
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, position, sheet, columns, rows, hero):
+    def __init__(self, position, sheet, sheet_left, columns, rows, hero):
         pygame.sprite.Sprite.__init__(self, group)
         self.frames = []
+        self.frames_left = []
         self.cut_sheet(sheet, columns, rows)
+        self.cut_sheet_left(sheet_left, columns, rows)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
         self.rect.x, self.rect.y = position
@@ -317,19 +316,41 @@ class Enemy(pygame.sprite.Sprite):
     def update(self, world, delta_time):
         if not TICK % 7:
             next_step = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
-            print(f'''---
-{next_step}
----''')
+            x, y = next_step
+            print(f'''---{next_step}---''')
+            if self.rect.x < x:
+                self.animation()
+            if self.rect.x > x:
+                self.animation_left()
+            if self.rect.y > y or self.rect.y < y:
+                self.animation()
             self.rect.x, self.rect.y = next_step
 
     def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
         for j in range(rows):
             for i in range(columns):
                 frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(
-                    pygame.Rect(frame_location, self.rect.size)))
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
+    def cut_sheet_left(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames_left.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
+    def animation(self):
+        if self.delay % 10 == 0:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
+        self.delay += 1
+
+    def animation_left(self):
+        if self.delay % 10 == 0:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames_left)
+            self.image = self.frames_left[self.cur_frame]
+        self.delay += 1
 
 
 class Stamina(pygame.sprite.Sprite):
@@ -351,18 +372,13 @@ class HP(pygame.sprite.Sprite):
 
 
 def play_but():
-    play = Button(400, 100, "data/play_inactive.png", "data/play_active.png")
-    play.draw(760, 400, "play")
-
-
-def newgame_but():
-    new_game = Button(400, 100, "data/test_inacrive.png", "data/test_acrive_black.png")
-    new_game.draw(760, 550, "new_game")
+    play = Button(600, 150, "data/play_inactive.png", "data/play_active.png")
+    play.draw(660, 460, "play")
 
 
 def exit_but():
-    exit_b = Button(400, 100, "data/exit_inacrive.png", "data/exit_acrive.png")
-    exit_b.draw(760, 700, "exit")
+    exit_b = Button(600, 150, "data/exit_inacrive.png", "data/exit_acrive.png")
+    exit_b.draw(660, 660, "exit")
 
 
 def start_screen():
@@ -374,7 +390,6 @@ def start_screen():
     while run:
         for event in pygame.event.get():
             play_but()
-            newgame_but()
             exit_but()
             if event.type == pygame.QUIT:
                 run = False
@@ -397,7 +412,6 @@ def pause():
 
 
 def game_over():
-    running = False
     sound_theme.stop()
     over = True
     while over:
@@ -409,15 +423,16 @@ def game_over():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RETURN]:
             over = False
-            start_screen()
+            return False
         pygame.display.update()
+    start_screen()
 
 
 def start_game():
     global TICK
     running = True
     screen.fill((0, 0, 0))
-    hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2, 10)
+    hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("poligon2.0.tmx", [30, 15], hero)
     main_menu_theme.stop()
     sound_theme.set_volume(0.3)
@@ -426,7 +441,7 @@ def start_game():
     clock = pygame.time.Clock()
     fps = 60
     clock = pygame.time.Clock()
-    print(hero.hp_health)
+    print(HP)
     while running:
         TICK += clock.tick()
         delta_time = clock.tick(fps) / 1000
@@ -436,6 +451,9 @@ def start_game():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
             pause()
+        if hero.hp_health < 1:
+            game_over()
+            running = False
         obstacles.update()
         enemy.update(world, delta_time)
         group.update(world, delta_time)
@@ -445,5 +463,6 @@ def start_game():
         pygame.display.flip()
 
     pygame.quit()
+
 
 start_screen()
