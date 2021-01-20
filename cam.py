@@ -23,7 +23,7 @@ def load_image(name, colorkey=None):
     return image
 
 
-tmx_data = load_pygame("maps/poligon2.0.tmx")
+tmx_data = load_pygame("maps/араб.tmx")
 map_data = pyscroll.TiledMapData(tmx_data)
 screen_size = (1920, 1020)
 TICK = 0
@@ -39,7 +39,7 @@ main_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Вол
 hit = pygame.mixer.Sound('sound/hit3.wav')
 regen = pygame.mixer.Sound('sound/successful_hit.wav')
 stamina_png = pygame.transform.scale(load_image('stamina.png'), (30, 500))
-SPEED_HERO = 5
+SPEED_HERO = 10
 enemy = pygame.sprite.Group()
 
 
@@ -436,8 +436,8 @@ def start_game():
     global TICK
     running = True
     screen.fill((0, 0, 0))
-    hero = Hero((50, 50), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
-    world = Map("poligon2.0.tmx", [30, 15], hero)
+    hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
+    world = Map("араб.tmx", [i for i in range(100)], hero)
     main_menu_theme.stop()
     sound_theme.set_volume(0.3)
     sound_theme.play(-1)
