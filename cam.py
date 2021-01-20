@@ -54,79 +54,79 @@ class Map:
         self.hero = hero
 
     def find_path(self, start, target):
-        # pix_move = 16
-        # move = [0, 0]
-        # xs, ys = start
-        # xt, yt = target
-        # if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
-        #     move[0] += 1
-        # elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
-        #     move[0] -= 1
-        # if ys < yt and self.is_free((xs // 32, (ys + pix_move) // 32)):
-        #     move[1] += 1
-        # elif ys > yt and self.is_free((xs // 32, (ys - pix_move) // 32)):
-        #     move[1] -= 1
-        # # if xs // 32 == xt // 32:
-        # #     move[0] = 0
-        # # if ys // 32 == xt // 32:
-        # #     move[1] = 0
-        # return start[0] + pix_move * move[0], start[1] + pix_move * move[1]
-        INF = 1000
-        fix_start = start[0] // self.tile_size, start[1] // self.tile_size
-        fix_target = target[0] // self.tile_size, target[1] // self.tile_size
-        if fix_start == fix_target:
-            return fix_start
-        # 0ая координата карты противника по отношению к основной карте
-        zero_coord = fix_start[0] - 19, fix_start[1] - 19
-        zero_coord_abs = list(map(abs, zero_coord))
-        # print(zero_coord, zero_coord_abs)
-        # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
-            # print('random')
-            return start
-            # return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
-        x = 19
-        y = 19
-        distance = [[INF] * 39 for _ in range(39)]
-        distance[19][19] = 0
-        prev = [[None] * 39 for _ in range(39)]
-        queue = [(x, y)]
-        while queue:
-            x, y = queue.pop(0)
-            for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
-                next_x, next_y = x + dx, y + dy
-                if 0 <= next_x < 39 and 0 <= next_y < 39 and \
-                        self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:
-                    distance[next_y][next_x] = distance[y][x] + 1
-                    prev[next_y][next_x] = (x, y)
-                    queue.append((next_x, next_y))
-
-        x, y = fix_target[0] - zero_coord_abs[0], fix_target[1] - zero_coord_abs[1]
-        # print(fix_target)
-        # print(fix_start)
-        # print(x - zero_coord[0], y - zero_coord[1])
-        # print('------')
-        # print('сдвиг', zero_coord)
-        # print('старт', fix_start)
-        # print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
-        # print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
-        # print('target с свдигом', x, y)
-        # for i, ev in enumerate(distance):
-        #     print(i, ev)
-        # for i, ev in enumerate(prev):
-        #     print(i, ev)
-        if distance[y][x] == INF:
-            # print('return start')
-            return start
-        while prev[y][x] != (19, 19):
-            if prev[y][x] == None:
-                # print('ноне')
-                return start
-            x, y = prev[y][x]
-            # print(x, y)
-        # print('откуда идём', start[0], start[1])
-        # print('куда идём', (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size)
-        return (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size
+        pix_move = 16
+        move = [0, 0]
+        xs, ys = start
+        xt, yt = target
+        if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
+            move[0] += 1
+        elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
+            move[0] -= 1
+        if ys < yt and self.is_free((xs // 32, (ys + pix_move) // 32)):
+            move[1] += 1
+        elif ys > yt and self.is_free((xs // 32, (ys - pix_move) // 32)):
+            move[1] -= 1
+        if xs // 32 == xt // 32:
+            move[0] = 0
+        if ys // 32 == xt // 32:
+            move[1] = 0
+        return start[0] + pix_move * move[0], start[1] + pix_move * move[1]
+        # INF = 1000
+        # fix_start = start[0] // self.tile_size, start[1] // self.tile_size
+        # fix_target = target[0] // self.tile_size, target[1] // self.tile_size
+        # if fix_start == fix_target:
+        #     return fix_start
+        # # 0ая координата карты противника по отношению к основной карте
+        # zero_coord = fix_start[0] - 19, fix_start[1] - 19
+        # zero_coord_abs = list(map(abs, zero_coord))
+        # # print(zero_coord, zero_coord_abs)
+        # # Рандомное движение если герой далеко, нужно проверить свободен ли блок
+        # if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+        #     # print('random')
+        #     return start
+        #     # return (fix_start[0] + randint(-1, 1)) * 32, (fix_start[1] + randint(-1, 1)) * 32
+        # x = 19
+        # y = 19
+        # distance = [[INF] * 39 for _ in range(39)]
+        # distance[19][19] = 0
+        # prev = [[None] * 39 for _ in range(39)]
+        # queue = [(x, y)]
+        # while queue:
+        #     x, y = queue.pop(0)
+        #     for dx, dy in (1, 0), (0, 1), (-1, 0), (0, -1):
+        #         next_x, next_y = x + dx, y + dy
+        #         if 0 <= next_x < 39 and 0 <= next_y < 39 and \
+        #                 self.is_free((next_y + zero_coord[1], next_x + zero_coord[0])) and distance[next_y][next_x] == INF:
+        #             distance[next_y][next_x] = distance[y][x] + 1
+        #             prev[next_y][next_x] = (x, y)
+        #             queue.append((next_x, next_y))
+        #
+        # x, y = fix_target[0] - zero_coord_abs[0], fix_target[1] - zero_coord_abs[1]
+        # # print(fix_target)
+        # # print(fix_start)
+        # # print(x - zero_coord[0], y - zero_coord[1])
+        # # print('------')
+        # # print('сдвиг', zero_coord)
+        # # print('старт', fix_start)
+        # # print('старт с сдвигом', fix_start[0] + zero_coord[0], fix_start[1] + zero_coord[1])
+        # # print('target без сдвига', x + zero_coord[0], y + zero_coord[1])
+        # # print('target с свдигом', x, y)
+        # # for i, ev in enumerate(distance):
+        # #     print(i, ev)
+        # # for i, ev in enumerate(prev):
+        # #     print(i, ev)
+        # if distance[y][x] == INF:
+        #     # print('return start')
+        #     return start
+        # while prev[y][x] != (19, 19):
+        #     if prev[y][x] == None:
+        #         # print('ноне')
+        #         return start
+        #     x, y = prev[y][x]
+        #     # print(x, y)
+        # # print('откуда идём', start[0], start[1])
+        # # print('куда идём', (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size)
+        # return (fix_start[0] + (x - 19)) * self.tile_size, (fix_start[1] + (y - 19)) * self.tile_size
 
     def render(self):
         for y in range(self.height):
@@ -137,8 +137,8 @@ class Map:
         for _ in range(20):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-                Enemy((x * self.tile_size, y * self.tile_size), load_image("llama (1).png"), 3, 2,
-                      self.hero)
+                Enemy((x * self.tile_size, y * self.tile_size), load_image("zombie.png"), load_image("zombie_left.png"),
+                      2, 2, self.hero)
 
     def get_tile_id(self, position):
         return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
@@ -183,7 +183,7 @@ class Button:
 
 
 class Hero(pygame.sprite.Sprite):
-    def __init__(self, position, sheet, sheet_left, columns, rows, hp):
+    def __init__(self, position, sheet, sheet_left, columns, rows):
         pygame.sprite.Sprite.__init__(self, group)
 
         self.frames = []
@@ -455,6 +455,7 @@ class Hero(pygame.sprite.Sprite):
         else:
             game_over()
 
+
     def stamina_hero(self, stamina):
         stamina_hero = StaminaBack(stamina_png_back)
         stamina_hero = StaminaBlue(stamina)
@@ -520,7 +521,6 @@ class Enemy(pygame.sprite.Sprite):
         self.delay += 1
 
 
-
 class StaminaBlue(pygame.sprite.Sprite):
     def __init__(self, stamina):
         super().__init__(staminaa)
@@ -568,7 +568,6 @@ def start_screen():
     while run:
         for event in pygame.event.get():
             play_but()
-            newgame_but()
             exit_but()
             if event.type == pygame.QUIT:
                 run = False
