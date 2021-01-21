@@ -261,7 +261,52 @@ class Hero(pygame.sprite.Sprite):
                     if pygame.sprite.spritecollideany(self, obstacles):
                         self.rect.x += SPEED_HERO + self.razgon
                         self.razgon = 0
+            elif key[pygame.K_a]:
+                if key[pygame.K_LSHIFT]:
+                    if self.stamina > 0:
+                        self.rect.x -= SPEED_HERO + (self.razgon * 2)
+                        self.animation_left()
+                        self.stamina -= 1
+                        self.stamina_hero(self.stamina)
+                        if pygame.sprite.spritecollideany(self, obstacles):
+                            self.rect.x += SPEED_HERO + (self.razgon * 2)
+                            self.razgon = 0
+                    else:
+                        self.rect.x -= SPEED_HERO + self.razgon
+                        self.animation_left()
+                        if pygame.sprite.spritecollideany(self, obstacles):
+                            self.rect.x += SPEED_HERO + self.razgon
+                            self.razgon = 0
+
+                else:
+                    self.rect.x -= SPEED_HERO + self.razgon
+                    self.animation_left()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x += SPEED_HERO + self.razgon
+                        self.razgon = 0
             if key[pygame.K_RIGHT]:
+                if key[pygame.K_LSHIFT]:
+                    if self.stamina > 0:
+                        self.rect.x += SPEED_HERO + (self.razgon * 2)
+                        self.animation()
+                        self.stamina -= 1
+                        self.stamina_hero(self.stamina)
+                        if pygame.sprite.spritecollideany(self, obstacles):
+                            self.rect.x -= SPEED_HERO + (self.razgon * 2)
+                            self.razgon = 0
+                    else:
+                        self.rect.x += SPEED_HERO + self.razgon
+                        self.animation()
+                        if pygame.sprite.spritecollideany(self, obstacles):
+                            self.rect.x -= SPEED_HERO + self.razgon
+                            self.razgon = 0
+                else:
+                    self.rect.x += SPEED_HERO + self.razgon
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.x -= SPEED_HERO + self.razgon
+                        self.razgon = 0
+            elif key[pygame.K_d]:
                 if key[pygame.K_LSHIFT]:
                     if self.stamina > 0:
                         self.rect.x += SPEED_HERO + (self.razgon * 2)
@@ -305,7 +350,28 @@ class Hero(pygame.sprite.Sprite):
                     if pygame.sprite.spritecollideany(self, obstacles):
                         self.rect.y += SPEED_HERO + self.razgon
                         self.razgon = 0
-
+            elif key[pygame.K_w]:
+                if key[pygame.K_LSHIFT]:
+                    if self.stamina > 0:
+                        self.rect.y -= SPEED_HERO + (self.razgon * 2)
+                        self.animation()
+                        self.stamina -= 1
+                        self.stamina_hero(self.stamina)
+                        if pygame.sprite.spritecollideany(self, obstacles):
+                            self.rect.y += SPEED_HERO + (self.razgon * 2)
+                            self.razgon = 0
+                    else:
+                        self.rect.y -= SPEED_HERO + self.razgon
+                        self.animation()
+                        if pygame.sprite.spritecollideany(self, obstacles):
+                            self.rect.y += SPEED_HERO + self.razgon
+                            self.razgon = 0
+                else:
+                    self.rect.y -= SPEED_HERO + self.razgon
+                    self.animation()
+                    if pygame.sprite.spritecollideany(self, obstacles):
+                        self.rect.y += SPEED_HERO + self.razgon
+                        self.razgon = 0
             if key[pygame.K_DOWN]:
                 if key[pygame.K_LSHIFT]:
                     if self.stamina > 0:
@@ -329,74 +395,8 @@ class Hero(pygame.sprite.Sprite):
                     if pygame.sprite.spritecollideany(self, obstacles):
                         self.rect.y -= SPEED_HERO + self.razgon
                         self.razgon = 0
-            if key[pygame.K_a]:
-                if key[pygame.K_LSHIFT]:
-                    if self.stamina > 0:
-                        self.rect.x -= SPEED_HERO + (self.razgon * 2)
-                        self.animation_left()
-                        self.stamina -= 1
-                        self.stamina_hero(self.stamina)
-                        if pygame.sprite.spritecollideany(self, obstacles):
-                            self.rect.x += SPEED_HERO + (self.razgon * 2)
-                            self.razgon = 0
-                    else:
-                        self.rect.x -= SPEED_HERO + self.razgon
-                        self.animation_left()
-                        if pygame.sprite.spritecollideany(self, obstacles):
-                            self.rect.x += SPEED_HERO + self.razgon
-                            self.razgon = 0
 
-                else:
-                    self.rect.x -= SPEED_HERO + self.razgon
-                    self.animation_left()
-                    if pygame.sprite.spritecollideany(self, obstacles):
-                        self.rect.x += SPEED_HERO + self.razgon
-                        self.razgon = 0
-            if key[pygame.K_d]:
-                if key[pygame.K_LSHIFT]:
-                    if self.stamina > 0:
-                        self.rect.x += SPEED_HERO + (self.razgon * 2)
-                        self.animation()
-                        self.stamina -= 1
-                        self.stamina_hero(self.stamina)
-                        if pygame.sprite.spritecollideany(self, obstacles):
-                            self.rect.x -= SPEED_HERO + (self.razgon * 2)
-                            self.razgon = 0
-                    else:
-                        self.rect.x += SPEED_HERO + self.razgon
-                        self.animation()
-                        if pygame.sprite.spritecollideany(self, obstacles):
-                            self.rect.x -= SPEED_HERO + self.razgon
-                            self.razgon = 0
-                else:
-                    self.rect.x += SPEED_HERO + self.razgon
-                    self.animation()
-                    if pygame.sprite.spritecollideany(self, obstacles):
-                        self.rect.x -= SPEED_HERO + self.razgon
-                        self.razgon = 0
-            if key[pygame.K_w]:
-                if key[pygame.K_LSHIFT]:
-                    if self.stamina > 0:
-                        self.rect.y -= SPEED_HERO + (self.razgon * 2)
-                        self.animation()
-                        self.stamina -= 1
-                        self.stamina_hero(self.stamina)
-                        if pygame.sprite.spritecollideany(self, obstacles):
-                            self.rect.y += SPEED_HERO + (self.razgon * 2)
-                            self.razgon = 0
-                    else:
-                        self.rect.y -= SPEED_HERO + self.razgon
-                        self.animation()
-                        if pygame.sprite.spritecollideany(self, obstacles):
-                            self.rect.y += SPEED_HERO + self.razgon
-                            self.razgon = 0
-                else:
-                    self.rect.y -= SPEED_HERO + self.razgon
-                    self.animation()
-                    if pygame.sprite.spritecollideany(self, obstacles):
-                        self.rect.y += SPEED_HERO + self.razgon
-                        self.razgon = 0
-            if key[pygame.K_s]:
+            elif key[pygame.K_s]:
                 if key[pygame.K_LSHIFT]:
                     if self.stamina > 0:
 
@@ -645,7 +645,7 @@ def start_game():
     running = True
     screen.fill((0, 0, 0))
     hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
-    world = Map("араб.tmx", [i for i in range(100)], hero)
+    world = Map("араб.tmx", [30, 15, 10, 5, 34], hero)
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
     sound_theme.play(-1)
