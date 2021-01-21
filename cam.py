@@ -49,6 +49,8 @@ stamina_png_back = pygame.transform.scale(load_image('задняя шкала.pn
 
 #global func
 SPEED_HERO = 3
+enemy = pygame.sprite.Group()
+pole = pygame.sprite.Group()
 DAMAGE_TICK = 0
 LOSE = False
 
@@ -64,7 +66,7 @@ class Map:
         self.hero = hero
 
     def find_path(self, start, target):
-        pix_move = 2
+        pix_move = 16
         move = [0, 0]
         xs, ys = start
         xt, yt = target
@@ -491,6 +493,7 @@ class Hero(pygame.sprite.Sprite):
                         (30, 30))), i)
                     hit.play()
 
+
     def stamina_hero(self, stamina):
         stamina_hero = StaminaBack(stamina_png_back)
         stamina_hero = StaminaBlue(stamina)
@@ -589,6 +592,7 @@ class HP(pygame.sprite.Sprite):
         self.rect.x = 10 * (health * 3.5)
         self.rect.y = 30
 
+
 def restart():
     global group, apple, enemy, obstacles, hero_group, heart, staminaa
     del group, apple, enemy, obstacles, hero_group, heart, staminaa
@@ -599,6 +603,16 @@ def restart():
     hero_group = pygame.sprite.Group()
     heart = pygame.sprite.Group()
     staminaa = pygame.sprite.Group()
+
+
+class Pole_zreniya(pygame.sprite.Sprite):
+    def __init__(self, position,  image):
+        super().__init__(pole)
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = position
+        self.add(pole)
+
 
 def play_but():
     play = Button(600, 150, "data/play_inactive.png", "data/play_active.png")
@@ -700,6 +714,7 @@ def start_game():
     screen.fill((0, 0, 0))
     hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [30, 15, 10, 5, 34], hero)
+    pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia__.png"))
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
     sound_theme.play(-1)
@@ -724,6 +739,7 @@ def start_game():
         apple.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
+        pole.draw(screen)
         heart.draw(screen)
         staminaa.draw(screen)
         if not hero.hp_health:
