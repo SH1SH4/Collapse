@@ -529,8 +529,8 @@ class Enemy(pygame.sprite.Sprite):
             self.animation()
         self.rect.x, self.rect.y = next_step
         global DAMAGE_TICK
-        if pygame.sprite.spritecollideany(self, hero_group) and pygame.time.get_ticks() - DAMAGE_TICK > 80:
-            print(pygame.time.get_ticks(), DAMAGE_TICK)
+        if pygame.sprite.spritecollideany(self, hero_group) and pygame.time.get_ticks() - DAMAGE_TICK > 800:
+            print(pygame.time.get_ticks(), DAMAGE_TICK, pygame.time.get_ticks() - DAMAGE_TICK)
             DAMAGE_TICK = pygame.time.get_ticks()
             self.hero.hp_health -= 1
             self.hero.hp_hero(self.hero.hp_health)
@@ -599,6 +599,7 @@ def restart():
     hero_group = pygame.sprite.Group()
     heart = pygame.sprite.Group()
     staminaa = pygame.sprite.Group()
+    start_screen()
 
 def play_but():
     play = Button(600, 150, "data/play_inactive.png", "data/play_active.png")
