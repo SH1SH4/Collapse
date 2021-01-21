@@ -48,12 +48,11 @@ regen = pygame.mixer.Sound('sound/successful_hit.wav')
 stamina_png_back = pygame.transform.scale(load_image('задняя шкала.png'), (335, 25))
 
 #global func
-SPEED_HERO = 3
+SPEED_HERO = 5
 enemy = pygame.sprite.Group()
 pole = pygame.sprite.Group()
 DAMAGE_TICK = 0
 LOSE = False
-
 
 
 class Map:
@@ -66,7 +65,7 @@ class Map:
         self.hero = hero
 
     def find_path(self, start, target):
-        pix_move = 16
+        pix_move = 2
         move = [0, 0]
         xs, ys = start
         xt, yt = target
@@ -493,7 +492,6 @@ class Hero(pygame.sprite.Sprite):
                         (30, 30))), i)
                     hit.play()
 
-
     def stamina_hero(self, stamina):
         stamina_hero = StaminaBack(stamina_png_back)
         stamina_hero = StaminaBlue(stamina)
@@ -594,9 +592,10 @@ class HP(pygame.sprite.Sprite):
 
 
 def restart():
-    global group, apple, enemy, obstacles, hero_group, heart, staminaa
-    del group, apple, enemy, obstacles, hero_group, heart, staminaa
+    global group, apple, enemy, obstacles, hero_group, heart, staminaa, pole
+    del group, apple, enemy, obstacles, hero_group, heart, staminaa, pole
     group = pyscroll.PyscrollGroup(map_layer=map_layer)
+    pole = pygame.sprite.Group()
     apple = pygame.sprite.Group()
     enemy = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
@@ -749,7 +748,6 @@ def start_game():
     else:
         pygame.quit()
     game_over()
-
 
 
 start_screen()
