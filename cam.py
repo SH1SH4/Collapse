@@ -171,10 +171,8 @@ class Button:
             if click[0] == 1:
                 screen.blit(self.active, (x, y))
                 if name == "play":
-                    start_game()
+                    view_management()
                     print("Ok")
-                if name == "new_game":
-                    print("New game")
                 if name == "exit":
                     pygame.quit()
                     quit()
@@ -237,7 +235,8 @@ class Hero(pygame.sprite.Sprite):
             if self.run_channel is None or not self.run_channel.get_busy():
                 self.run_channel = run.play()
         print(self.stamina)
-        if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
+        if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN] or key[pygame.K_w] or \
+                key[pygame.K_a] or key[pygame.K_s] or key[pygame.K_d]:
 
             if key[pygame.K_LEFT]:
                 if key[pygame.K_LSHIFT]:
@@ -455,7 +454,6 @@ class Hero(pygame.sprite.Sprite):
         else:
             game_over()
 
-
     def stamina_hero(self, stamina):
         stamina_hero = StaminaBack(stamina_png_back)
         stamina_hero = StaminaBlue(stamina)
@@ -559,8 +557,44 @@ def exit_but():
     exit_b.draw(660, 660, "exit")
 
 
+def view_management():
+    managment = True
+    while managment:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                managment = False
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_RETURN]:
+                managment = False
+        screen.fill((0, 0, 0))
+        button_go = pygame.image.load("data/button_go.png")
+        screen.blit(button_go, (1450, 25))
+        esc = pygame.image.load("data/esc.png")
+        screen.blit(esc, (770, 300))
+        enter = pygame.image.load("data/enter-key.png")
+        screen.blit(enter, (980, 400))
+        shift = pygame.image.load("data/shift.png")
+        screen.blit(shift, (900, 500))
+        e = pygame.image.load("data/e.png")
+        screen.blit(e, (860, 200))
+        screen.blit(enter, (1170, 800))
+        screen.blit(shift, (1200, 700))
+        print_text("УПРАВЛЕНИЕ", 780, 10, 50, (255, 255, 255))
+        print_text("Кнопки W, A, S, D или СТРЕЛОЧКИ - управление игроком", 100, 100, 40, (255, 255, 255))
+        print_text("Кнопка E - подобрать предмет", 100, 200, 40, (255, 255, 255))
+        print_text("Кнопка Esc - ПАУЗА в игре", 100, 300, 40, (255, 255, 255))
+        print_text("Кнопка Enter - отмена паузы в игре", 100, 400, 40, (255, 255, 255))
+        print_text("Кнопка Shift - ускорение игрока", 100, 500, 40, (255, 255, 255))
+        print_text("P.S. чтобы игрок двигался быстрее, сначала подождите", 100, 600, 40, (255, 255, 255))
+        print_text("разгон персонажа и примините кнопку Shift", 100, 700, 40, (255, 255, 255))
+        print_text("Чтобы начать игру - нажмите кнопку Enter", 100, 800, 40, (255, 255, 255))
+        pygame.display.update()
+    start_game()
+
+
 def start_screen():
     main_menu_theme.play(-1)
+    main_menu_theme.set_volume(0.1)
     menu_background = pygame.image.load("data/background.png")
     screen.blit(menu_background, (0, 0))
     clock = pygame.time.Clock()
@@ -613,7 +647,7 @@ def start_game():
     hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [i for i in range(100)], hero)
     main_menu_theme.stop()
-    sound_theme.set_volume(0.3)
+    sound_theme.set_volume(0.1)
     sound_theme.play(-1)
     world.render()
     clock = pygame.time.Clock()
