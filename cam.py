@@ -42,6 +42,7 @@ regen = pygame.mixer.Sound('sound/successful_hit.wav')
 stamina_png_back = pygame.transform.scale(load_image('задняя шкала.png'), (335, 25))
 SPEED_HERO = 3
 enemy = pygame.sprite.Group()
+pole = pygame.sprite.Group()
 
 
 class Map:
@@ -454,6 +455,7 @@ class Hero(pygame.sprite.Sprite):
         else:
             game_over()
 
+
     def stamina_hero(self, stamina):
         stamina_hero = StaminaBack(stamina_png_back)
         stamina_hero = StaminaBlue(stamina)
@@ -545,6 +547,15 @@ class HP(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 10 * (health * 3.5)
         self.rect.y = 30
+
+
+class Pole_zreniya(pygame.sprite.Sprite):
+    def __init__(self, position,  image):
+        super().__init__(pole)
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = position
+        self.add(pole)
 
 
 def play_but():
@@ -646,6 +657,7 @@ def start_game():
     screen.fill((0, 0, 0))
     hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [30, 15, 10, 5, 34], hero)
+    pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia__.png"))
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
     sound_theme.play(-1)
@@ -666,14 +678,17 @@ def start_game():
         if hero.hp_health < 1:
             game_over()
             running = False
+
         obstacles.update()
         enemy.update(world, delta_time)
         group.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
+        pole.draw(screen)
         heart.draw(screen)
         staminaa.draw(screen)
         pygame.display.flip()
+
 
     pygame.quit()
 
