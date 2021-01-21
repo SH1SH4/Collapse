@@ -23,25 +23,35 @@ def load_image(name, colorkey=None):
     image = pygame.image.load(fullname)
     return image
 
-
+# options
 tmx_data = load_pygame("maps/араб.tmx")
 map_data = pyscroll.TiledMapData(tmx_data)
 screen_size = (1920, 1020)
 TICK = 0
 map_layer = pyscroll.BufferedRenderer(map_data, screen_size, True)
+
+# groups
 group = pyscroll.PyscrollGroup(map_layer=map_layer)
+apple = pygame.sprite.Group()
+enemy = pygame.sprite.Group()
 obstacles = pygame.sprite.Group()
-hero = pygame.sprite.Group()
+hero_group = pygame.sprite.Group()
 heart = pygame.sprite.Group()
 staminaa = pygame.sprite.Group()
+
+# sounds
 run = pygame.mixer.Sound('sound/run.wav')
 sound_theme = pygame.mixer.Sound('sound/Alan Walker - Spectre.wav')
 main_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Воланд.wav')
 hit = pygame.mixer.Sound('sound/hit3.wav')
 regen = pygame.mixer.Sound('sound/successful_hit.wav')
 stamina_png_back = pygame.transform.scale(load_image('задняя шкала.png'), (335, 25))
+
+#global func
 SPEED_HERO = 3
-enemy = pygame.sprite.Group()
+DAMAGE_TICK = 0
+LOSE = False
+
 
 
 class Map:
@@ -54,10 +64,14 @@ class Map:
         self.hero = hero
 
     def find_path(self, start, target):
-        pix_move = 16
+        pix_move = 2
         move = [0, 0]
         xs, ys = start
         xt, yt = target
+        # Рандомное движение если герой далеко, нужно проверить свободен ли блок
+        # if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+        #     # print('random')
+        #     return start
         if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
             move[0] += 1
         elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
@@ -140,6 +154,11 @@ class Map:
                 Enemy((x * self.tile_size, y * self.tile_size), load_image("zombie.png"), load_image("zombie_left.png"),
                       2, 2, self.hero)
 
+        for _ in range(20):
+            x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
+            if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
+                Apple(x * self.tile_size, y * self.tile_size, load_image("apple.png"), self.hero)
+
     def get_tile_id(self, position):
         return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
 
@@ -154,6 +173,24 @@ class Obstacles(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
         self.add(obstacles)
+
+
+class Apple(pygame.sprite.Sprite):
+    def __init__(self, x, y, image, hero):
+        super().__init__(apple)
+        pygame.sprite.Sprite.__init__(self, group)
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.hero = hero
+        self.add(apple)
+
+    def update(self, world, delta_time):
+        if pygame.sprite.spritecollideany(self, hero_group):
+            self.hero.hp_health += 1
+            self.hero.hp_hero(self.hero.hp_health)
+            self.kill()
 
 
 class Button:
@@ -173,6 +210,8 @@ class Button:
                 if name == "play":
                     view_management()
                     print("Ok")
+                if name == "new_game":
+                    print("New game")
                 if name == "exit":
                     pygame.quit()
                     quit()
@@ -194,7 +233,7 @@ class Hero(pygame.sprite.Sprite):
         self.delay = 0
         self.hp_health = 10
         self.stamina = 50
-        self.add(hero)
+        self.add(hero_group)
         self.hp_hero(self.hp_health)
 
         self.run_channel = None
@@ -234,7 +273,6 @@ class Hero(pygame.sprite.Sprite):
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
             if self.run_channel is None or not self.run_channel.get_busy():
                 self.run_channel = run.play()
-        print(self.stamina)
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN] or key[pygame.K_w] or \
                 key[pygame.K_a] or key[pygame.K_s] or key[pygame.K_d]:
 
@@ -451,8 +489,7 @@ class Hero(pygame.sprite.Sprite):
                     hp = HP((pygame.transform.scale(load_image(
                         'kisspng-broken-heart-computer-icons-clip-art-broken-or-splitted-heart-vector-5ae64d56110867.0049922915250425180698.png'),
                         (30, 30))), i)
-        else:
-            game_over()
+                    hit.play()
 
     def stamina_hero(self, stamina):
         stamina_hero = StaminaBack(stamina_png_back)
@@ -480,17 +517,23 @@ class Enemy(pygame.sprite.Sprite):
         self.hero = hero
 
     def update(self, world, delta_time):
-        if not TICK % 7:
-            next_step = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
-            x, y = next_step
-            print(f'''---{next_step}---''')
-            if self.rect.x < x:
-                self.animation()
-            if self.rect.x > x:
-                self.animation_left()
-            if self.rect.y > y or self.rect.y < y:
-                self.animation()
-            self.rect.x, self.rect.y = next_step
+        # if not TICK % 32:
+        next_step = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
+        x, y = next_step
+        print(f'''---{next_step}---''')
+        if self.rect.x < x:
+            self.animation()
+        if self.rect.x > x:
+            self.animation_left()
+        if self.rect.y > y or self.rect.y < y:
+            self.animation()
+        self.rect.x, self.rect.y = next_step
+        global DAMAGE_TICK
+        if pygame.sprite.spritecollideany(self, hero_group) and pygame.time.get_ticks() - DAMAGE_TICK > 80:
+            print(pygame.time.get_ticks(), DAMAGE_TICK)
+            DAMAGE_TICK = pygame.time.get_ticks()
+            self.hero.hp_health -= 1
+            self.hero.hp_hero(self.hero.hp_health)
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
@@ -546,6 +589,16 @@ class HP(pygame.sprite.Sprite):
         self.rect.x = 10 * (health * 3.5)
         self.rect.y = 30
 
+def restart():
+    global group, apple, enemy, obstacles, hero_group, heart, staminaa
+    del group, apple, enemy, obstacles, hero_group, heart, staminaa
+    group = pyscroll.PyscrollGroup(map_layer=map_layer)
+    apple = pygame.sprite.Group()
+    enemy = pygame.sprite.Group()
+    obstacles = pygame.sprite.Group()
+    hero_group = pygame.sprite.Group()
+    heart = pygame.sprite.Group()
+    staminaa = pygame.sprite.Group()
 
 def play_but():
     play = Button(600, 150, "data/play_inactive.png", "data/play_active.png")
@@ -636,12 +689,13 @@ def game_over():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RETURN]:
             over = False
-            start_screen()
+            restart()
+            pass
         pygame.display.update()
 
 
 def start_game():
-    global TICK
+    global TICK, DAMAGE_TICK
     running = True
     screen.fill((0, 0, 0))
     hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
@@ -655,7 +709,6 @@ def start_game():
     clock = pygame.time.Clock()
     print(hero.hp_health)
     while running:
-        TICK += clock.tick()
         delta_time = clock.tick(fps) / 1000
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -663,19 +716,23 @@ def start_game():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
             pause()
-        if hero.hp_health < 1:
-            game_over()
-            running = False
+        TICK = pygame.time.get_ticks()
+        print(TICK)
         obstacles.update()
         enemy.update(world, delta_time)
         group.update(world, delta_time)
+        apple.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
         heart.draw(screen)
         staminaa.draw(screen)
+        if not hero.hp_health:
+            break
         pygame.display.flip()
+    else:
+        pygame.quit()
+    game_over()
 
-    pygame.quit()
 
 
 start_screen()
