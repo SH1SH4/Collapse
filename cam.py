@@ -69,7 +69,7 @@ class Map:
         xs, ys = start
         xt, yt = target
         # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+        if abs(xs - xt) > 19 or abs(ys - yt) > 19:
             # print('random')
             return start
         if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
@@ -187,7 +187,7 @@ class Apple(pygame.sprite.Sprite):
         self.add(apple)
 
     def update(self, world, delta_time):
-        if pygame.sprite.spritecollideany(self, hero_group):
+        if pygame.sprite.spritecollideany(self, hero_group) and self.hero.hp_health < 10:
             self.hero.hp_health += 1
             self.hero.hp_hero(self.hero.hp_health)
             self.kill()
