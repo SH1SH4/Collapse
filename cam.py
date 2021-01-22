@@ -54,7 +54,6 @@ DAMAGE_TICK = 0
 LOSE = False
 
 
-
 class Map:
     def __init__(self, filename, free_tile, hero):
         self.map = pytmx.load_pygame(f"maps/{filename}")
@@ -69,9 +68,10 @@ class Map:
         move = [0, 0]
         xs, ys = start
         xt, yt = target
-        if abs(xs - xt) // 32 > 19 or abs(ys - yt) // 32 > 19:
-            return start
-
+        # Рандомное движение если герой далеко, нужно проверить свободен ли блок
+        # if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+        #     # print('random')
+        #     return start
         if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
             move[0] += 1
         elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
@@ -210,11 +210,13 @@ class Button:
                 if name == "play":
                     view_management()
                     print("Ok")
-                if name == "new_game":
-                    print("New game")
-                if name == "exit":
+                elif name == "exit":
                     pygame.quit()
                     quit()
+                elif name == "autors":
+                    about_autors()
+                elif name == "game":
+                    about_game()
         else:
             screen.blit(self.inactive, (x, y))
 
@@ -236,7 +238,7 @@ class Hero(pygame.sprite.Sprite):
         self.max_speed = 6
         self.add(hero_group)
         self.hp_hero(self.hp_health)
-        self.razgon = 0
+        # self.razgon = 0
         self.run_channel = None
         self.hit_channel = None
 
@@ -431,6 +433,7 @@ class Hero(pygame.sprite.Sprite):
             if self.hit_channel is None or not self.hit_channel.get_busy():
                 self.hit_channel = hit.play()
             self.hp_health -= 1
+            print(self.hp_health)
             self.hp_hero(self.hp_health)
             hit.play()
 
@@ -576,6 +579,16 @@ def exit_but():
     exit_b.draw(660, 660, "exit")
 
 
+def autors_but():
+    exit_b = Button(600, 150, "data/ab_autors_inact.png", "data/ab_autors_act.png")
+    exit_b.draw(1590, 970, "autors")
+
+
+def game_but():
+    exit_b = Button(600, 150, "data/ab_game_inact.png", "data/ab_game_act.png")
+    exit_b.draw(10, 970, "game")
+
+
 def view_management():
     managment = True
     while managment:
@@ -611,6 +624,52 @@ def view_management():
     start_game()
 
 
+def about_autors():
+    autors = True
+    menu_background = pygame.image.load("data/background_2.png")
+    screen.blit(menu_background, (0, 0))
+    while autors:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                autors = False
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_ESCAPE]:
+                autors = False
+        print_text("Об авторах", 780, 10, 50, (255, 255, 255))
+        print_text("Матвеев", 100, 100, 40, (255, 255, 255))
+        print_text("Александр", 100, 200, 40, (255, 255, 255))
+        print_text("Шишкин", 850, 100, 40, (255, 255, 255))
+        print_text("Алексей", 850, 200, 40, (255, 255, 255))
+        print_text("Арнаут", 1550, 100, 40, (255, 255, 255))
+        print_text("Антон", 1550, 200, 40, (255, 255, 255))
+        pygame.display.update()
+    start_screen()
+
+
+def about_game():
+    game = True
+    menu_background = pygame.image.load("data/background_2.png")
+    screen.blit(menu_background, (0, 0))
+    while game:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game = False
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_ESCAPE]:
+                game = False
+        print_text("Сюжет игры", 780, 10, 50, (255, 255, 255))
+        print_text("Весь мир охватила пандемия!", 100, 100, 40, (255, 255, 255))
+        print_text("Все силовые структуры", 100, 200, 40, (255, 255, 255))
+        print_text("Кнопка Esc - ПАУЗА в игре", 100, 300, 40, (255, 255, 255))
+        print_text("Кнопка Enter - отмена паузы в игре", 100, 400, 40, (255, 255, 255))
+        print_text("Кнопка Shift - ускорение игрока", 100, 500, 40, (255, 255, 255))
+        print_text("P.S. чтобы игрок двигался быстрее, сначала подождите", 100, 600, 40, (255, 255, 255))
+        print_text("разгон персонажа и примините кнопку Shift", 100, 700, 40, (255, 255, 255))
+        print_text("Чтобы начать игру - нажмите кнопку Enter", 100, 800, 40, (255, 255, 255))
+        pygame.display.update()
+    start_screen()
+
+
 def start_screen():
     main_menu_theme.play(-1)
     main_menu_theme.set_volume(0.1)
@@ -622,6 +681,8 @@ def start_screen():
         for event in pygame.event.get():
             play_but()
             exit_but()
+            autors_but()
+            game_but()
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
@@ -666,14 +727,16 @@ def start_game():
     screen.fill((0, 0, 0))
     hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [30, 15, 10, 5, 34], hero)
-    pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia__.png"))
+    # pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia.png"))
+    # menu_background = pygame.image.load("data/pole_zrenia.png")
+    # screen.blit(menu_background, (0, 0))
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
     sound_theme.play(-1)
     world.render()
     fps = 60
     clock = pygame.time.Clock()
-    pole.draw(screen)
+    # pole.draw(screen)
     while running:
         delta_time = clock.tick(fps) / 1000
         for event in pygame.event.get():
@@ -684,14 +747,13 @@ def start_game():
             pause()
         TICK += 1
         print(TICK)
-        print('fps', clock.get_fps())
         obstacles.update()
         enemy.update(world, delta_time)
         group.update(world, delta_time)
         apple.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
-        pole.draw(screen)
+        # screen.blit(menu_background, (0, 0))
         heart.draw(screen)
         staminaa.draw(screen)
         if not hero.hp_health:
@@ -700,7 +762,6 @@ def start_game():
     else:
         pygame.quit()
     game_over()
-
 
 
 start_screen()
