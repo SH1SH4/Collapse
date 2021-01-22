@@ -149,7 +149,7 @@ class Map:
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size,
                               y * self.tile_size)
-        for _ in range(20):
+        for _ in range(100):
             x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
                 Enemy((x * self.tile_size, y * self.tile_size), load_image("zombie.png"), load_image("zombie_left.png"),
@@ -211,11 +211,13 @@ class Button:
                 if name == "play":
                     view_management()
                     print("Ok")
-                if name == "new_game":
-                    print("New game")
-                if name == "exit":
+                elif name == "exit":
                     pygame.quit()
                     quit()
+                elif name == "autors":
+                    about_autors()
+                elif name == "game":
+                    about_game()
         else:
             screen.blit(self.inactive, (x, y))
 
@@ -624,6 +626,16 @@ def exit_but():
     exit_b.draw(660, 660, "exit")
 
 
+def autors_but():
+    exit_b = Button(600, 150, "data/ab_autors_inact.png", "data/ab_autors_act.png")
+    exit_b.draw(1590, 970, "autors")
+
+
+def game_but():
+    exit_b = Button(600, 150, "data/ab_game_inact.png", "data/ab_game_act.png")
+    exit_b.draw(10, 970, "game")
+
+
 def view_management():
     managment = True
     while managment:
@@ -659,6 +671,34 @@ def view_management():
     start_game()
 
 
+def about_autors():
+    autors = True
+    while autors:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                autors = False
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_ESCAPE]:
+                autors = False
+        screen.fill((0, 0, 0))
+        pygame.display.update()
+    start_screen()
+
+
+def about_game():
+    game = True
+    while game:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game = False
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_ESCAPE]:
+                game = False
+        screen.fill((0, 0, 0))
+        pygame.display.update()
+    start_screen()
+
+
 def start_screen():
     main_menu_theme.play(-1)
     main_menu_theme.set_volume(0.1)
@@ -670,6 +710,8 @@ def start_screen():
         for event in pygame.event.get():
             play_but()
             exit_but()
+            autors_but()
+            game_but()
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
@@ -714,7 +756,7 @@ def start_game():
     screen.fill((0, 0, 0))
     hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [30, 15, 10, 5, 34], hero)
-    pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia__.png"))
+    pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia.png"))
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
     sound_theme.play(-1)
