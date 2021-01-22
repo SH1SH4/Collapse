@@ -69,9 +69,9 @@ class Map:
         xs, ys = start
         xt, yt = target
         # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        # if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
-        #     # print('random')
-        #     return start
+        if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+            # print('random')
+            return start
         if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
             move[0] += 1
         elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
@@ -282,7 +282,7 @@ class Hero(pygame.sprite.Sprite):
                 self.max_speed = 10
                 self.stamina -= 1
             else:
-                if not TICK % 4:
+                if not TICK % 4 and self.stamina <= 100:
                     self.stamina += 1
                     self.stamina_hero(self.stamina)
                 if self.max_speed > 6:
