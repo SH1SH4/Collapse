@@ -523,7 +523,7 @@ class Enemy(pygame.sprite.Sprite):
         # if not TICK % 32:
         next_step = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
         x, y = next_step
-        print(f'''---{next_step}---''')
+
         if self.rect.x < x:
             self.animation()
         if self.rect.x > x:
@@ -533,7 +533,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = next_step
         global DAMAGE_TICK
         if pygame.sprite.spritecollideany(self, hero_group) and pygame.time.get_ticks() - DAMAGE_TICK > 800:
-            print(pygame.time.get_ticks(), DAMAGE_TICK, pygame.time.get_ticks() - DAMAGE_TICK)
+
             DAMAGE_TICK = pygame.time.get_ticks()
             self.hero.hp_health -= 1
             self.hero.hp_hero(self.hero.hp_health)
@@ -673,6 +673,8 @@ def view_management():
 
 def about_autors():
     autors = True
+    menu_background = pygame.image.load("data/background_2.png")
+    screen.blit(menu_background, (0, 0))
     while autors:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -680,13 +682,21 @@ def about_autors():
             keys = pygame.key.get_pressed()
             if keys[pygame.K_ESCAPE]:
                 autors = False
-        screen.fill((0, 0, 0))
+        print_text("Об авторах", 780, 10, 50, (255, 255, 255))
+        print_text("Матвеев", 100, 100, 40, (255, 255, 255))
+        print_text("Александр", 100, 200, 40, (255, 255, 255))
+        print_text("Шишкин", 850, 100, 40, (255, 255, 255))
+        print_text("Алексей", 850, 200, 40, (255, 255, 255))
+        print_text("Арнаут", 1550, 100, 40, (255, 255, 255))
+        print_text("Антон", 1550, 200, 40, (255, 255, 255))
         pygame.display.update()
     start_screen()
 
 
 def about_game():
     game = True
+    menu_background = pygame.image.load("data/background_2.png")
+    screen.blit(menu_background, (0, 0))
     while game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -694,7 +704,15 @@ def about_game():
             keys = pygame.key.get_pressed()
             if keys[pygame.K_ESCAPE]:
                 game = False
-        screen.fill((0, 0, 0))
+        print_text("Сюжет игры", 780, 10, 50, (255, 255, 255))
+        print_text("Весь мир охватила пандемия!", 100, 100, 40, (255, 255, 255))
+        print_text("Все силовые структуры", 100, 200, 40, (255, 255, 255))
+        print_text("Кнопка Esc - ПАУЗА в игре", 100, 300, 40, (255, 255, 255))
+        print_text("Кнопка Enter - отмена паузы в игре", 100, 400, 40, (255, 255, 255))
+        print_text("Кнопка Shift - ускорение игрока", 100, 500, 40, (255, 255, 255))
+        print_text("P.S. чтобы игрок двигался быстрее, сначала подождите", 100, 600, 40, (255, 255, 255))
+        print_text("разгон персонажа и примините кнопку Shift", 100, 700, 40, (255, 255, 255))
+        print_text("Чтобы начать игру - нажмите кнопку Enter", 100, 800, 40, (255, 255, 255))
         pygame.display.update()
     start_screen()
 
@@ -756,7 +774,9 @@ def start_game():
     screen.fill((0, 0, 0))
     hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [30, 15, 10, 5, 34], hero)
-    pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia.png"))
+    # pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia.png"))
+    # menu_background = pygame.image.load("data/pole_zrenia.png")
+    # screen.blit(menu_background, (0, 0))
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
     sound_theme.play(-1)
@@ -775,13 +795,14 @@ def start_game():
             pause()
         TICK = pygame.time.get_ticks()
         print(TICK)
+        print(clock.get_fps())
         obstacles.update()
         enemy.update(world, delta_time)
         group.update(world, delta_time)
         apple.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
-        pole.draw(screen)
+        # screen.blit(menu_background, (0, 0))
         heart.draw(screen)
         staminaa.draw(screen)
         if not hero.hp_health:
