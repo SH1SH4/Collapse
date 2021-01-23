@@ -23,7 +23,7 @@ def load_image(name):
 
 
 # options
-tmx_data = load_pygame("maps/араб.tmx")
+tmx_data = load_pygame("maps/map.tmx")
 map_data = pyscroll.TiledMapData(tmx_data)
 screen_size = (1920, 1020)
 TICK = 0
@@ -213,7 +213,7 @@ class Apple(pygame.sprite.Sprite):
         self.add(other)
 
     def update(self, world, delta_time):
-        if pygame.sprite.spritecollideany(self, hero_group) and self.hero.hp_health < 10:
+        if pygame.sprite.spritecollideany(self, hero_group) and self.hero.hp_health < 5:
             regen.play()
             self.hero.hp_health += 1
             self.hero.hp_hero(self.hero.hp_health)
@@ -484,7 +484,7 @@ class Hero(pygame.sprite.Sprite):
     def hp_hero(self, health):
         self.remove(heart)
         if health > 0:
-            for i in range(1, 11):
+            for i in range(1, 6):
                 if i <= health:
                     HP((pygame.transform.scale(load_image('heart.png'), (30, 30))), i)
                 else:
@@ -651,28 +651,27 @@ def view_management():
             keys = pygame.key.get_pressed()
             if keys[pygame.K_RETURN]:
                 managment = False
-        screen.fill((0, 0, 0))
+        screen.fill((16, 19, 45))
         button_go = pygame.image.load("data/button_go.png")
-        screen.blit(button_go, (1450, 125))
+        screen.blit(button_go, (1450, 170))
         esc = pygame.image.load("data/esc.png")
-        screen.blit(esc, (770, 400))
+        screen.blit(esc, (770, 450))
         enter = pygame.image.load("data/enter-key.png")
-        screen.blit(enter, (980, 400))
+        screen.blit(enter, (980, 540))
         shift = pygame.image.load("data/shift.png")
-        screen.blit(shift, (900, 500))
+        screen.blit(shift, (900, 650))
         tab = pygame.image.load("data/tab.png")
-        screen.blit(tab, (860, 300))
-        screen.blit(enter, (1170, 800))
-        screen.blit(shift, (1200, 700))
+        screen.blit(tab, (800, 350))
+        screen.blit(enter, (1170, 790))
         print_text("УПРАВЛЕНИЕ", 780, 10, 50, (255, 255, 255))
         print_text("Кнопки W, A, S, D или СТРЕЛОЧКИ - управление игроком", 100,
-                   200, 40, (255, 255, 255))
-        print_text("Кнопка TAB - показать HUD", 100, 300, 40,
+                   250, 40, (255, 255, 255))
+        print_text("Кнопка TAB - показать HUD", 100, 350, 40,
                    (255, 255, 255))
-        print_text("Кнопка Esc - ПАУЗА в игре", 100, 400, 40, (255, 255, 255))
-        print_text("Кнопка Enter - отмена паузы в игре", 100, 500, 40,
+        print_text("Кнопка Esc - ПАУЗА в игре", 100, 450, 40, (255, 255, 255))
+        print_text("Кнопка Enter - отмена паузы в игре", 100, 550, 40,
                    (255, 255, 255))
-        print_text("Кнопка Shift - ускорение игрока", 100, 600, 40,
+        print_text("Кнопка Shift - ускорение игрока", 100, 650, 40,
                    (255, 255, 255))
         print_text("Чтобы начать игру - нажмите кнопку Enter", 100, 800, 40,
                    (255, 255, 255))
@@ -810,11 +809,8 @@ def start_game():
     global TICK, DAMAGE_TICK, PILL_COUNTER
     running = True
     screen.fill((0, 0, 0))
-    hero = Hero((7 * 32, 12 * 32), load_image("hero.png"),
-                load_image("hero_left.png"), 2, 2)
-    world = Map("араб.tmx",
-                [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 567, 308,
-                 580], hero)
+    hero = Hero((7 * 32, 12 * 32), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
+    world = Map("map.tmx", [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 567, 308, 580], hero)
     Exit(hero)
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
@@ -852,7 +848,6 @@ def start_game():
             staminaa.draw(screen)
             heart.draw(screen)
             print_text(f"Пилюль Собрано: {PILL_COUNTER}/3 Фпс:{str(framerate)[:2]}", 1550, 30, 20, (255, 255, 255))
-        print(framerate)
         if not hero.hp_health:
             break
         pygame.display.flip()
