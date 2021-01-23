@@ -69,7 +69,7 @@ class Map:
         xs, ys = start
         xt, yt = target
         # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        if abs(xs - xt) > 19 or abs(ys - yt) > 19:
+        if abs(xs -xt) > 19 or abs(ys - yt) > 19:
             # print('random')
             return start
         if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
@@ -187,7 +187,8 @@ class Apple(pygame.sprite.Sprite):
         self.add(apple)
 
     def update(self, world, delta_time):
-        if pygame.sprite.spritecollideany(self, hero_group) and self.hero.hp_health < 10:
+        if pygame.sprite.spritecollideany(self, hero_group):
+            regen.play()
             self.hero.hp_health += 1
             self.hero.hp_hero(self.hero.hp_health)
             self.kill()
@@ -625,6 +626,7 @@ def view_management():
 
 
 def about_autors():
+    main_menu_theme.stop()
     autors = True
     menu_background = pygame.image.load("data/background_2.png")
     screen.blit(menu_background, (0, 0))
@@ -647,6 +649,7 @@ def about_autors():
 
 
 def about_game():
+    main_menu_theme.stop()
     game = True
     menu_background = pygame.image.load("data/background_2.png")
     screen.blit(menu_background, (0, 0))
@@ -659,13 +662,14 @@ def about_game():
                 game = False
         print_text("Сюжет игры", 780, 10, 50, (255, 255, 255))
         print_text("Весь мир охватила пандемия!", 100, 100, 40, (255, 255, 255))
-        print_text("Все силовые структуры", 100, 200, 40, (255, 255, 255))
-        print_text("Кнопка Esc - ПАУЗА в игре", 100, 300, 40, (255, 255, 255))
-        print_text("Кнопка Enter - отмена паузы в игре", 100, 400, 40, (255, 255, 255))
-        print_text("Кнопка Shift - ускорение игрока", 100, 500, 40, (255, 255, 255))
-        print_text("P.S. чтобы игрок двигался быстрее, сначала подождите", 100, 600, 40, (255, 255, 255))
-        print_text("разгон персонажа и примините кнопку Shift", 100, 700, 40, (255, 255, 255))
-        print_text("Чтобы начать игру - нажмите кнопку Enter", 100, 800, 40, (255, 255, 255))
+        print_text("Все силовые структуры, включая ОМОН теперь не занимаются", 100, 200, 40, (255, 255, 255))
+        print_text("защитой людей, а лишь пытаются их съесть!", 100, 300, 40, (255, 255, 255))
+        print_text("Вы оказались на бывшей территории летнего лагеря,", 100, 400, 40, (255, 255, 255))
+        print_text("В этой локации очень много зараженных ОМОНовцов, все они", 100, 500, 40, (255, 255, 255))
+        print_text("были посланы сюда для подавления очага.", 100, 600, 40, (255, 255, 255))
+        print_text("Но они не смогли препядствовать вирусу, поэтому сами стали жертвами", 100, 700, 40, (255, 255, 255))
+        print_text("Ваша задача - найти выход, либо найти 3 квестовых предмета.", 100, 800, 40, (255, 255, 255))
+        print_text("УДАЧИ!", 100, 900, 40, (255, 255, 255))
         pygame.display.update()
     start_screen()
 
@@ -725,8 +729,8 @@ def start_game():
     global TICK, DAMAGE_TICK
     running = True
     screen.fill((0, 0, 0))
-    hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
-    world = Map("араб.tmx", [30, 15, 10, 5, 34], hero)
+    hero = Hero((525, 525), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
+    world = Map("араб.tmx", [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 567, 308, 580], hero)
     # pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia.png"))
     # menu_background = pygame.image.load("data/pole_zrenia.png")
     # screen.blit(menu_background, (0, 0))
@@ -753,7 +757,8 @@ def start_game():
         apple.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
-        # screen.blit(menu_background, (0, 0))
+        framerate = clock.get_fps()
+        print_text(str(framerate)[:2], 1870, 10, 30, (255, 255, 255))
         heart.draw(screen)
         staminaa.draw(screen)
         if not hero.hp_health:
