@@ -56,7 +56,7 @@ PILL_COUNTER = 0
 pole = pygame.sprite.Group()
 DAMAGE_TICK = 0
 LOSE = False
-COUNT = 0
+
 
 
 class Map:
@@ -253,16 +253,17 @@ class Exit(pygame.sprite.Sprite):
     def __init__(self, hero):
         pygame.sprite.Sprite.__init__(self, group)
         self.hero = hero
+        self.image = load_image("exit.png")
+        self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = 67 * 32, 0
         self.add(exits)
 
     def update(self, world, delta_time):
         if pygame.sprite.spritecollideany(self, hero_group):
-            if 3 < PILL_COUNTER:
-                pass
+            if PILL_COUNTER < 3:
+                game_win()
             else:
-                pass
-
+                game_win()
 
 
 class Hero(pygame.sprite.Sprite):
@@ -789,11 +790,12 @@ def game_win():
 
 
 def start_game():
-    global TICK, DAMAGE_TICK
+    global TICK, DAMAGE_TICK, PILL_COUNTER
     running = True
     screen.fill((0, 0, 0))
     hero = Hero((7 * 32, 12 * 32), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 567, 308, 580], hero)
+    ex = Exit(hero)
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
     sound_theme.play(-1)
@@ -809,19 +811,21 @@ def start_game():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
             pause()
+        if keys[pygame.K_MINUS]:
+            PILL_COUNTER += 1
         TICK += 1
         print(TICK)
         obstacles.update()
         enemy.update(world, delta_time)
         group.update(world, delta_time)
         pills.update(world, delta_time)
-        exit.update(world, delta_time)
+        exits.update(world, delta_time)
         apple.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
         framerate = clock.get_fps()
         print_text(str(framerate)[:2], 1870, 10, 30, (255, 255, 255))
-        print_text(f"Собрано: {COUNT}/3", 1760, 50, 20, (255, 255, 255))
+        print_text(f"Собрано: {PILL_COUNTER}/3", 1760, 50, 20, (255, 255, 255))
         heart.draw(screen)
         staminaa.draw(screen)
         if not hero.hp_health:
