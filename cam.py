@@ -188,6 +188,7 @@ class Apple(pygame.sprite.Sprite):
 
     def update(self, world, delta_time):
         if pygame.sprite.spritecollideany(self, hero_group):
+            regen.play()
             self.hero.hp_health += 1
             self.hero.hp_hero(self.hero.hp_health)
             self.kill()
@@ -726,7 +727,7 @@ def start_game():
     running = True
     screen.fill((0, 0, 0))
     hero = Hero((525, 525), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
-    world = Map("араб.tmx", [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 444, 567, 308], hero)
+    world = Map("араб.tmx", [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 567, 308, 580], hero)
     # pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia.png"))
     # menu_background = pygame.image.load("data/pole_zrenia.png")
     # screen.blit(menu_background, (0, 0))
