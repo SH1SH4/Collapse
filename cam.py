@@ -37,7 +37,9 @@ enemy = pygame.sprite.Group()
 obstacles = pygame.sprite.Group()
 hero_group = pygame.sprite.Group()
 heart = pygame.sprite.Group()
+exits = pygame.sprite.Group()
 staminaa = pygame.sprite.Group()
+pills = pygame.sprite.Group()
 
 # sounds
 run = pygame.mixer.Sound('sound/run.wav')
@@ -48,7 +50,9 @@ regen = pygame.mixer.Sound('sound/successful_hit.wav')
 stamina_png_back = pygame.transform.scale(load_image('задняя шкала.png'), (335, 25))
 
 #global func
+PILL_POSES = ((22, 190),(212, 253),(45, 242),(127, 99),(269, 266))
 SPEED_HERO = 0
+PILL_COUNTER = 0
 pole = pygame.sprite.Group()
 DAMAGE_TICK = 0
 LOSE = False
@@ -70,7 +74,7 @@ class Map:
         xs, ys = start
         xt, yt = target
         # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        if abs(xs -xt) > 19 or abs(ys - yt) > 19:
+        if abs(xs -xt) > 19 * 32 or abs(ys - yt) > 19 * 32:
             # print('random')
             return start
         if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
@@ -160,6 +164,11 @@ class Map:
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
                 Apple(x * self.tile_size, y * self.tile_size, load_image("apple.png"), self.hero)
 
+        for pos in PILL_POSES:
+            x, y = pos
+            print(pos)
+            Pill((y * 32, x * 32), load_image('pill.png'), self.hero)
+
     def get_tile_id(self, position):
         return self.map.tiledgidmap[self.map.get_tile_gid(*position, 0)]
 
@@ -174,6 +183,23 @@ class Obstacles(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
         self.add(obstacles)
+
+
+class Pill(pygame.sprite.Sprite):
+    def __init__(self, pos, image, hero):
+        super().__init__(pills)
+        pygame.sprite.Sprite.__init__(self, group)
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = pos
+        self.hero = hero
+        self.add(pills)
+
+    def update(self, world, delta_time):
+        if pygame.sprite.spritecollideany(self, hero_group):
+            global PILL_COUNTER
+            PILL_COUNTER += 1
+            self.kill()
 
 
 class Apple(pygame.sprite.Sprite):
@@ -221,6 +247,22 @@ class Button:
                     about_game()
         else:
             screen.blit(self.inactive, (x, y))
+
+
+class Exit(pygame.sprite.Sprite):
+    def __init__(self, hero):
+        pygame.sprite.Sprite.__init__(self, group)
+        self.hero = hero
+        self.rect.x, self.rect.y = 67 * 32, 0
+        self.add(exits)
+
+    def update(self, world, delta_time):
+        if pygame.sprite.spritecollideany(self, hero_group):
+            if 3 < PILL_COUNTER:
+                pass
+            else:
+                pass
+
 
 
 class Hero(pygame.sprite.Sprite):
@@ -555,9 +597,11 @@ def restart():
     pole = pygame.sprite.Group()
     apple = pygame.sprite.Group()
     enemy = pygame.sprite.Group()
+    pills = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
     hero_group = pygame.sprite.Group()
     heart = pygame.sprite.Group()
+    exit = pygame.sprite.Group()
     staminaa = pygame.sprite.Group()
     start_screen()
 
@@ -748,7 +792,7 @@ def start_game():
     global TICK, DAMAGE_TICK
     running = True
     screen.fill((0, 0, 0))
-    hero = Hero((525, 525), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
+    hero = Hero((7 * 32, 12 * 32), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 567, 308, 580], hero)
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
@@ -770,6 +814,8 @@ def start_game():
         obstacles.update()
         enemy.update(world, delta_time)
         group.update(world, delta_time)
+        pills.update(world, delta_time)
+        exit.update(world, delta_time)
         apple.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
