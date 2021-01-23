@@ -52,6 +52,7 @@ SPEED_HERO = 0
 pole = pygame.sprite.Group()
 DAMAGE_TICK = 0
 LOSE = False
+COUNT = 0
 
 
 class Map:
@@ -725,15 +726,30 @@ def game_over():
         pygame.display.update()
 
 
+def game_win():
+    running = False
+    sound_theme.stop()
+    over = True
+    while over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                over = False
+        screen.fill((0, 0, 0))
+        print_text("YOU WON!", 780, 450, 50, (255, 255, 255))
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            over = False
+            restart()
+            pass
+        pygame.display.update()
+
+
 def start_game():
     global TICK, DAMAGE_TICK
     running = True
     screen.fill((0, 0, 0))
     hero = Hero((525, 525), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
     world = Map("араб.tmx", [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 567, 308, 580], hero)
-    # pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia.png"))
-    # menu_background = pygame.image.load("data/pole_zrenia.png")
-    # screen.blit(menu_background, (0, 0))
     main_menu_theme.stop()
     sound_theme.set_volume(0.1)
     sound_theme.play(-1)
@@ -759,6 +775,7 @@ def start_game():
         group.draw(screen)
         framerate = clock.get_fps()
         print_text(str(framerate)[:2], 1870, 10, 30, (255, 255, 255))
+        print_text(f"Собрано: {COUNT}/3", 1760, 50, 20, (255, 255, 255))
         heart.draw(screen)
         staminaa.draw(screen)
         if not hero.hp_health:
@@ -766,6 +783,7 @@ def start_game():
         pygame.display.flip()
     else:
         pygame.quit()
+
     game_over()
 
 
