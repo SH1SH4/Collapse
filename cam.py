@@ -69,7 +69,7 @@ class Map:
         xs, ys = start
         xt, yt = target
         # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        if abs(fix_target[0] - fix_start[0]) > 19 or abs(fix_target[1] - fix_start[1]) > 19:
+        if abs(xs -xt) > 19 or abs(ys - yt) > 19:
             # print('random')
             return start
         if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
@@ -725,8 +725,8 @@ def start_game():
     global TICK, DAMAGE_TICK
     running = True
     screen.fill((0, 0, 0))
-    hero = Hero((500, 500), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
-    world = Map("араб.tmx", [30, 15, 10, 5, 34], hero)
+    hero = Hero((525, 525), load_image("hero.png"), load_image("hero_left.png"), 2, 2)
+    world = Map("араб.tmx", [30, 15, 10, 5, 34, 73, 313, 597, 577, 818, 442, 412, 444, 567, 308], hero)
     # pole_zr = Pole_zreniya((0, 0), load_image("pole_zrenia.png"))
     # menu_background = pygame.image.load("data/pole_zrenia.png")
     # screen.blit(menu_background, (0, 0))
