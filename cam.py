@@ -757,7 +757,8 @@ def start_game():
         apple.update(world, delta_time)
         group.center(hero.rect.center)
         group.draw(screen)
-        # screen.blit(menu_background, (0, 0))
+        framerate = clock.get_fps()
+        print_text(str(framerate)[:2], 1870, 10, 30, (255, 255, 255))
         heart.draw(screen)
         staminaa.draw(screen)
         if not hero.hp_health:
