@@ -43,7 +43,7 @@ staminaa = pygame.sprite.Group()
 death = pygame.mixer.Sound('sound/death.wav')
 run = pygame.mixer.Sound('sound/run.wav')
 sound_theme = pygame.mixer.Sound('sound/main_theme.wav')
-main_menu_theme = pygame.mixer.Sound('sound/menu_theme.wav')
+main_menu_theme = pygame.mixer.Sound('sound/main_menu.wav')
 hit = pygame.mixer.Sound('sound/hit3.wav')
 regen = pygame.mixer.Sound('sound/successful_hit.wav')
 stamina_png_back = pygame.transform.scale(load_image('задняя шкала.png'),
@@ -743,7 +743,7 @@ def about_game():
 
 def start_screen():
     main_menu_theme.play(-1)
-    main_menu_theme.set_volume(0.1)
+    main_menu_theme.set_volume(1)
     menu_background = pygame.image.load("data/background.png")
     screen.blit(menu_background, (0, 0))
     work = True
