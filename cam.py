@@ -603,12 +603,13 @@ class HP(pygame.sprite.Sprite):
 
 
 def restart():
-    global group, enemy, obstacles, hero_group, heart, staminaa, pole, other
-    del group, enemy, obstacles, hero_group, heart, staminaa, pole, other
+    global group, enemy, obstacles, hero_group, heart, staminaa, pole, other, PILL_COUNTER
+    del group, enemy, obstacles, hero_group, heart, staminaa, pole, other, PILL_COUNTER
     group = pyscroll.PyscrollGroup(map_layer=map_layer)
     pole = pygame.sprite.Group()
     enemy = pygame.sprite.Group()
     other = pygame.sprite.Group()
+    PILL_COUNTER = 0
     obstacles = pygame.sprite.Group()
     hero_group = pygame.sprite.Group()
     heart = pygame.sprite.Group()
