@@ -40,9 +40,10 @@ exits = pygame.sprite.Group()
 staminaa = pygame.sprite.Group()
 
 # sounds
+death = pygame.mixer.Sound('sound/death.wav')
 run = pygame.mixer.Sound('sound/run.wav')
-sound_theme = pygame.mixer.Sound('sound/Alan Walker - Spectre.wav')
-main_menu_theme = pygame.mixer.Sound('sound/Игорь Корнелюк - Воланд.wav')
+sound_theme = pygame.mixer.Sound('sound/main_theme.wav')
+main_menu_theme = pygame.mixer.Sound('sound/menu_theme.wav')
 hit = pygame.mixer.Sound('sound/hit3.wav')
 regen = pygame.mixer.Sound('sound/successful_hit.wav')
 stamina_png_back = pygame.transform.scale(load_image('задняя шкала.png'),
@@ -151,21 +152,20 @@ class Map:
             for x in range(self.width):
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size, y * self.tile_size)
-        for _ in range(20):
-            x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
+        for _ in range(35):
+            x, y = (randint(15, self.width - 15), randint(15, self.height - 15))
             if self.map.tiledgidmap[
                 self.map.get_tile_gid(x, y, 0)] in self.free_tile:
                 Enemy((x * self.tile_size, y * self.tile_size), load_image("zombie.png"),
                       load_image("zombie_left.png"), 2, 2, self.hero)
 
         for _ in range(20):
-            x, y = (randint(0, self.width - 1), randint(0, self.height - 1))
+            x, y = (randint(15, self.width - 15), randint(15, self.height - 15))
             if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
                 Apple(x * self.tile_size, y * self.tile_size, load_image("apple.png"), self.hero)
 
         for pos in PILL_POSES:
             x, y = pos
-            print(pos)
             Pill((y * 32, x * 32), load_image('pill.png'), self.hero)
 
     def get_tile_id(self, position):
@@ -470,7 +470,11 @@ class Hero(pygame.sprite.Sprite):
         else:
             if SPEED_HERO > 0:
                 SPEED_HERO -= 1
+            if self.stamina < 100:
+                self.stamina += 2
 
+        if self.stamina < 100 and not TICK % 5:
+            self.stamina += 1
         self.stamina_hero(self.stamina)
 
         if key[pygame.K_MINUS]:
@@ -773,6 +777,7 @@ def pause():
 
 def game_over():
     sound_theme.stop()
+    death.play()
     over = True
     while over:
         for event in pygame.event.get():
@@ -783,6 +788,7 @@ def game_over():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RETURN]:
             over = False
+            death.stop()
             restart()
             pass
         pygame.display.update()
