@@ -98,21 +98,24 @@ class Map:
         obs[19][19] = 0
         way = [[None] * 41 for _ in range(41)]
         queue = [(19, 19)]
-        while queue and way[ty // 32 - zy][tx // 32 - zx] is None:
-            x, y = queue.pop(0)
-            for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)):
-                next_x, next_y = x + dx, y + dy
-                if 0 <= next_x < 41 and 0 <= next_y < 41 and obs[next_y][next_x] == inf \
-                        and self.is_free((next_x + zx, next_y + zy)):
-                    obs[next_y][next_x] = obs[y][x] + 1
-                    way[next_y][next_x] = (x, y)
-                    queue.append((next_x, next_y))
+        if 0 <= tx // 32 - zx < 41 and 0 <= ty // 32 - zy < 41:
+            while queue and way[ty // 32 - zy][tx // 32 - zx] is None:
+                x, y = queue.pop(0)
+                for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)):
+                    next_x, next_y = x + dx, y + dy
+                    if 0 <= next_x < 41 and 0 <= next_y < 41 and obs[next_y][next_x] == inf \
+                            and self.is_free((next_x + zx, next_y + zy)):
+                        obs[next_y][next_x] = obs[y][x] + 1
+                        way[next_y][next_x] = (x, y)
+                        queue.append((next_x, next_y))
 
-        x, y = tx // 32 - zx, ty // 32 - zy
-        if 0 <= x < 41 and 0 <= y < 41 and way[y][x] is not None:
-            while way[y][x] != (19, 19):
-                x, y = way[y][x]
-            return (zx + x) * 32, (zy + y) * 32
+            x, y = tx // 32 - zx, ty // 32 - zy
+            if way[y][x] is not None:
+                while way[y][x] != (19, 19):
+                    x, y = way[y][x]
+                return (zx + x) * 32, (zy + y) * 32
+            else:
+                return xs, ys
         else:
             return xs, ys
 
@@ -123,10 +126,10 @@ class Map:
                 if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] not in self.free_tile:
                     Obstacles(self.map.get_tile_image(x, y, 0), x * self.tile_size, y * self.tile_size)
 
-        for _ in range(1):
+        for _ in range(30):
             x, y = (randint(15, self.width - 15), randint(15, self.height - 15))
             #if self.map.tiledgidmap[self.map.get_tile_gid(x, y, 0)] in self.free_tile:
-            Enemy((20 * 32, 20 * 32), load_image("zombie.png"), load_image("zombie_left.png"), 2, 2, self.hero)
+            Enemy((x * 32, y * 32), load_image("zombie.png"), load_image("zombie_left.png"), 2, 2, self.hero)
 
         for _ in range(20):
             x, y = (randint(15, self.width - 15), randint(15, self.height - 15))
@@ -489,7 +492,7 @@ class Enemy(pygame.sprite.Sprite):
         self.hero = hero
 
     def update(self, world, delta_time):
-        if not TICK % 5:
+        if not TICK % 9:
             next_step = world.find_path((self.rect.x, self.rect.y),
                                     self.hero.get_position())
             x, y = next_step
