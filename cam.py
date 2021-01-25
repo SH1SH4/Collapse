@@ -117,7 +117,7 @@ class Map:
             else:
                 return xs, ys
         else:
-            return xs, ys
+            return xs, ys # оно живое
 
 
     def render(self):
