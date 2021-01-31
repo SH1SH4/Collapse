@@ -31,10 +31,13 @@ map_layer = pyscroll.BufferedRenderer(map_data, screen_size, True)
 
 # groups
 group = pyscroll.PyscrollGroup(map_layer=map_layer)
+enemys = pygame.sprite.Group()
 hearts = pygame.sprite.Group()
 stats = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 obstacles = pygame.sprite.Group()
 hero_group = pygame.sprite.Group()
+marker = pygame.sprite.Group()
 
 # sounds
 death = pygame.mixer.Sound('sound/death.wav')
@@ -194,6 +197,8 @@ class Hero(pygame.sprite.Sprite):
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[
             pygame.K_DOWN] or key[pygame.K_w] or \
                 key[pygame.K_a] or key[pygame.K_s] or key[pygame.K_d]:
+            for i in marker:
+                i.kill()
             if not TICK % 10:
                 self.run_channel = run.play()
             if key[pygame.K_LSHIFT] and self.stamina > 0 and self.speed > 0:
@@ -241,11 +246,21 @@ class Hero(pygame.sprite.Sprite):
                     self.rect.y -= self.speed
                     self.speed = 0
         else:
+            if not len(marker):
+                Marker(self.nearest(), self)
             if self.speed > 0:
                 self.speed -= 1
-            if self.stamina < 100 and not key[pygame.K_LSHIFT]:
+            if self.stamina < 99:
                 self.stamina += 2
                 self.update_stamina()
+
+    def nearest(self):
+        near = float("inf")
+        for enemy in enemys:
+            if abs(self.rect.x - enemy.rect.x) + abs(self.rect.y - enemy.rect.y) < near:
+                near = abs(self.rect.x - enemy.rect.x) + abs(self.rect.y - enemy.rect.y)
+                choose = enemy
+        return choose.rect.x, choose.rect.y
 
     def update_hp(self, change):
         hearts.remove(hearts.sprites())
@@ -277,6 +292,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
         self.rect.x, self.rect.y = position
         self.delay = 0
+        self.add(enemys)
         self.hero = hero
 
     def update(self, world):
@@ -326,6 +342,37 @@ class Enemy(pygame.sprite.Sprite):
         self.delay += 1
 
 
+class Marker(pygame.sprite.Sprite):
+    def __init__(self, near, hero):
+        super().__init__(group)
+        self.image = pygame.Surface((50, 50))
+        pygame.draw.circle(self.image, pygame.Color(9, 152, 184), (23, 25), 25, 3)
+        self.image.set_colorkey((0, 0, 0))
+        self.rect = self.image.get_rect()
+        self.hero = hero
+        self.rect.x = near[0]
+        self.rect.y = near[1]
+        self.add(marker)
+
+    def update(self, world):
+        self.rect.x = self.hero.nearest()[0]
+        self.rect.y = self.hero.nearest()[1]
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, start, target):
+        super().__init__(bullets)
+        self.start = start
+        self.target = target
+        self.f_tick = TICK    # Тик когда произошёл выстрел
+
+    def update(self, screen):
+        if TICK - self.f_tick < 60:
+            pygame.draw.line(screen, (255, 0, 0, [(1 - (TICK - self.f_tick % 60) // 6 / 10)]), self.start, self.target, 8)
+        else:
+            self.kill()
+
+
 class Obstacles(pygame.sprite.Sprite):
     def __init__(self, img, x, y):
         super().__init__(obstacles)
@@ -369,8 +416,7 @@ class Apple(pygame.sprite.Sprite):
 class StaminaBlue(pygame.sprite.Sprite):
     def __init__(self, stamina):
         super().__init__(stats)
-        stamina_screen = pygame.transform.scale(
-            load_image('передняя шкала.png'), (int(3.25 * stamina), 15))
+        stamina_screen = pygame.transform.scale(load_image('передняя шкала.png'), (int(3.25 * stamina), 15))
         self.image = stamina_screen
         self.rect = self.image.get_rect()
         self.rect.x = 45
@@ -675,6 +721,7 @@ def start_game():
         # obstacles.update() # лол эта функция ни на что не влияет, но фпс жрёт??
         group.center(hero.rect.center)
         group.update(world)
+        bullets.update(screen)
         group.draw(screen)
         framerate = clock.get_fps()
         if hud:
