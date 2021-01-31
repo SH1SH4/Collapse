@@ -48,9 +48,7 @@ stamina_png_back = pygame.transform.scale(load_image('задняя шкала.pn
 
 # global func
 PILL_POSES = ((190, 22), (212, 253), (45, 242), (127, 99), (269, 266))
-SPEED_HERO = 0
 PILL_COUNTER = 0
-pole = pygame.sprite.Group()
 DAMAGE_TICK = 0
 LOSE = False
 
@@ -69,10 +67,6 @@ class Map:
         # move = [0, 0]
         # xs, ys = start
         # xt, yt = target
-        # # Рандомное движение если герой далеко, нужно проверить свободен ли блок
-        # if abs(xs - xt) > 19 * 32 or abs(ys - yt) > 19 * 32:
-        #     # print('random')
-        #     return start
         # if xs < xt and self.is_free(((xs + pix_move) // 32, ys // 32)):
         #     move[0] += 1
         # elif xs > xt and self.is_free(((xs - pix_move) // 32, ys // 32)):
@@ -116,7 +110,6 @@ class Map:
         else:
             return xs, ys # оно живое
 
-
     def render(self):
         for y in range(self.height):
             for x in range(self.width):
@@ -144,89 +137,6 @@ class Map:
         return self.get_tile_id(position) in self.free_tile
 
 
-class Obstacles(pygame.sprite.Sprite):
-    def __init__(self, img, x, y):
-        super().__init__(obstacles)
-        self.image = img
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = x, y
-        self.add(obstacles)
-
-
-class Pill(pygame.sprite.Sprite):
-    def __init__(self, pos, image, hero):
-        super().__init__(group)
-        self.image = image
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = pos
-        self.hero = hero
-
-    def update(self, *args):
-        if pygame.sprite.spritecollideany(self, hero_group):
-            global PILL_COUNTER
-            PILL_COUNTER += 1
-            self.kill()
-
-
-class Apple(pygame.sprite.Sprite):
-    def __init__(self, x, y, image, hero):
-        super().__init__(group)
-        # pygame.sprite.Sprite.__init__(self, group)
-        self.image = image
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.hero = hero
-
-    def update(self, *args):
-        if pygame.sprite.spritecollideany(self, hero_group) and self.hero.hp < 5:
-            self.hero.update_hp(1)
-            self.kill()
-
-
-class Button:
-    def __init__(self, width, height, inactive=None, active=None):
-        self.width = width
-        self.height = height
-        self.inactive = pygame.image.load(inactive)
-        self.active = pygame.image.load(active)
-
-    def draw(self, x, y, name):
-        mouse = pygame.mouse.get_pos()
-        click = pygame.mouse.get_pressed()
-        if x < mouse[0] < x + self.width and y < mouse[1] < y + self.height:
-            screen.blit(self.active, (x, y))
-            if click[0] == 1:
-                screen.blit(self.active, (x, y))
-                if name == "play":
-                    view_management()
-                    print("Ok")
-                elif name == "exit":
-                    pygame.quit()
-                    quit()
-                elif name == "autors":
-                    about_autors()
-                elif name == "game":
-                    about_game()
-        else:
-            screen.blit(self.inactive, (x, y))
-
-
-class Exit(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__(group)
-        self.image = load_image("exit.png")
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = 67 * 32, 0
-
-    def update(self, *args):
-        if pygame.sprite.spritecollideany(self, hero_group):
-            if PILL_COUNTER < 3:
-                pass
-            else:
-                game_win()
-
-
 class Hero(pygame.sprite.Sprite):
     def __init__(self, position, sheet, sheet_left, columns, rows):
         super().__init__(group)
@@ -242,6 +152,7 @@ class Hero(pygame.sprite.Sprite):
         self.hp = 1
         self.stamina = 50
         self.max_speed = 6
+        self.speed = 0
         self.add(hero_group)
         self.update_hp(0)
         self.run_channel = None
@@ -279,14 +190,13 @@ class Hero(pygame.sprite.Sprite):
         self.delay += 1
 
     def update(self, world):
-        global SPEED_HERO
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[
             pygame.K_DOWN] or key[pygame.K_w] or \
                 key[pygame.K_a] or key[pygame.K_s] or key[pygame.K_d]:
             if not TICK % 10:
                 self.run_channel = run.play()
-            if key[pygame.K_LSHIFT] and self.stamina > 0:
+            if key[pygame.K_LSHIFT] and self.stamina > 0 and self.speed > 0:
                 self.update_stamina()
                 self.max_speed = 10
                 self.stamina -= 1
@@ -296,48 +206,49 @@ class Hero(pygame.sprite.Sprite):
                     self.update_stamina()
                 if self.max_speed > 6:
                     self.max_speed -= 1
-                if SPEED_HERO > self.max_speed and not TICK % 5:
-                    SPEED_HERO -= 1
+                if self.speed > self.max_speed and not TICK % 5:
+                    self.speed -= 1
             if key[pygame.K_LEFT] or key[pygame.K_a]:
-                if SPEED_HERO < self.max_speed:
-                    SPEED_HERO += 1
+                if self.speed < self.max_speed:
+                    self.speed += 1
                 self.animation_left()
-                self.rect.x -= SPEED_HERO
+                self.rect.x -= self.speed
                 if pygame.sprite.spritecollideany(self, obstacles):
-                    self.rect.x += SPEED_HERO
-                    SPEED_HERO = 0
+                    self.rect.x += self.speed
+                    self.speed = 0
             if key[pygame.K_RIGHT] or key[pygame.K_d]:
-                if SPEED_HERO < self.max_speed:
-                    SPEED_HERO += 1
+                if self.speed < self.max_speed:
+                    self.speed += 1
                 self.animation()
-                self.rect.x += SPEED_HERO
+                self.rect.x += self.speed
                 if pygame.sprite.spritecollideany(self, obstacles):
-                    self.rect.x -= SPEED_HERO
-                    SPEED_HERO = 0
+                    self.rect.x -= self.speed
+                    self.speed = 0
             if key[pygame.K_UP] or key[pygame.K_w]:
-                if SPEED_HERO < self.max_speed:
-                    SPEED_HERO += 1
+                if self.speed < self.max_speed:
+                    self.speed += 1
                 self.animation()
-                self.rect.y -= SPEED_HERO
+                self.rect.y -= self.speed
                 if pygame.sprite.spritecollideany(self, obstacles):
-                    self.rect.y += SPEED_HERO
-                    SPEED_HERO = 0
+                    self.rect.y += self.speed
+                    self.speed = 0
             if key[pygame.K_DOWN] or key[pygame.K_s]:
-                if SPEED_HERO < self.max_speed:
-                    SPEED_HERO += 1
+                if self.speed < self.max_speed:
+                    self.speed += 1
                 self.animation()
-                self.rect.y += SPEED_HERO
+                self.rect.y += self.speed
                 if pygame.sprite.spritecollideany(self, obstacles):
-                    self.rect.y -= SPEED_HERO
-                    SPEED_HERO = 0
+                    self.rect.y -= self.speed
+                    self.speed = 0
         else:
-            if SPEED_HERO > 0:
-                SPEED_HERO -= 1
+            if self.speed > 0:
+                self.speed -= 1
             if self.stamina < 100 and not key[pygame.K_LSHIFT]:
                 self.stamina += 2
+                self.update_stamina()
 
     def update_hp(self, change):
-        hearts.remove([i for i in hearts.sprites()])
+        hearts.remove(hearts.sprites())
         self.hp += change
         if change > 0:
             heal.play()
@@ -352,13 +263,6 @@ class Hero(pygame.sprite.Sprite):
     def update_stamina(self):
         StaminaBack(stamina_png_back)
         StaminaBlue(self.stamina)
-
-
-def print_text(text, x, y, font_size, font_color=(0, 0, 0),
-               font_type="data/text.ttf"):
-    font_type = pygame.font.Font(font_type, font_size)
-    message = font_type.render(text, True, font_color)
-    screen.blit(message, (x, y))
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -422,6 +326,46 @@ class Enemy(pygame.sprite.Sprite):
         self.delay += 1
 
 
+class Obstacles(pygame.sprite.Sprite):
+    def __init__(self, img, x, y):
+        super().__init__(obstacles)
+        self.image = img
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+        self.add(obstacles)
+
+
+class Pill(pygame.sprite.Sprite):
+    def __init__(self, pos, image, hero):
+        super().__init__(group)
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = pos
+        self.hero = hero
+
+    def update(self, *args):
+        if pygame.sprite.spritecollideany(self, hero_group):
+            global PILL_COUNTER
+            PILL_COUNTER += 1
+            self.kill()
+
+
+class Apple(pygame.sprite.Sprite):
+    def __init__(self, x, y, image, hero):
+        super().__init__(group)
+        # pygame.sprite.Sprite.__init__(self, group)
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.hero = hero
+
+    def update(self, *args):
+        if pygame.sprite.spritecollideany(self, hero_group) and self.hero.hp < 5:
+            self.hero.update_hp(1)
+            self.kill()
+            
+
 class StaminaBlue(pygame.sprite.Sprite):
     def __init__(self, stamina):
         super().__init__(stats)
@@ -451,6 +395,49 @@ class HP(pygame.sprite.Sprite):
         self.rect.y = 30
 
 
+class Exit(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(group)
+        self.image = load_image("exit.png")
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = 67 * 32, 0
+
+    def update(self, *args):
+        if pygame.sprite.spritecollideany(self, hero_group):
+            if PILL_COUNTER < 3:
+                pass
+            else:
+                game_win()
+
+
+class Button:
+    def __init__(self, width, height, inactive=None, active=None):
+        self.width = width
+        self.height = height
+        self.inactive = pygame.image.load(inactive)
+        self.active = pygame.image.load(active)
+
+    def draw(self, x, y, name):
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+        if x < mouse[0] < x + self.width and y < mouse[1] < y + self.height:
+            screen.blit(self.active, (x, y))
+            if click[0] == 1:
+                screen.blit(self.active, (x, y))
+                if name == "play":
+                    view_management()
+                    print("Ok")
+                elif name == "exit":
+                    pygame.quit()
+                    quit()
+                elif name == "autors":
+                    about_autors()
+                elif name == "game":
+                    about_game()
+        else:
+            screen.blit(self.inactive, (x, y))
+
+
 def restart():
     global group, hearts, stats, obstacles, hero_group
     del group, hearts, stats, obstacles, hero_group
@@ -460,6 +447,14 @@ def restart():
     obstacles = pygame.sprite.Group()
     hero_group = pygame.sprite.Group()
     start_screen()
+
+
+def print_text(text, x, y, font_size, font_color=(0, 0, 0),
+               font_type="data/text.ttf"):
+    font_type = pygame.font.Font(font_type, font_size)
+    message = font_type.render(text, True, font_color)
+    screen.blit(message, (x, y))
+
 
 def play_but():
     play = Button(600, 150, "data/play_inactive.png", "data/play_active.png")
@@ -692,8 +687,6 @@ def start_game():
         clock.tick(fps)
     else:
         pygame.quit()
-
-
     game_over()
 
 
