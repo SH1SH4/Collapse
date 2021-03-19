@@ -260,7 +260,7 @@ class Hero(pygame.sprite.Sprite):
             if abs(self.rect.x - enemy.rect.x) + abs(self.rect.y - enemy.rect.y) < near:
                 near = abs(self.rect.x - enemy.rect.x) + abs(self.rect.y - enemy.rect.y)
                 choose = enemy
-        return choose.rect.x, choose.rect.y
+        return choose
 
     def update_hp(self, change):
         hearts.remove(hearts.sprites())
@@ -296,7 +296,7 @@ class Enemy(pygame.sprite.Sprite):
         self.hero = hero
 
     def update(self, world):
-        if not TICK % 9:
+        if not TICK % 8:
             next_step = world.find_path((self.rect.x, self.rect.y), self.hero.get_position())
             x, y = next_step
             if self.rect.x < x:
@@ -350,18 +350,20 @@ class Marker(pygame.sprite.Sprite):
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         self.hero = hero
-        self.rect.x = near[0]
-        self.rect.y = near[1]
+        self.rect.x = near.rect.x
+        self.rect.y = near.rect.y
         self.add(marker)
 
     def update(self, world):
-        self.rect.x = self.hero.nearest()[0]
-        self.rect.y = self.hero.nearest()[1]
+        self.rect.x = self.hero.nearest().rect.x
+        self.rect.y = self.hero.nearest().rect.y
 
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, start, target):
         super().__init__(bullets)
+        self.image = pygame.Surface((50, 50))
+        pygame.draw.line(self.image, pygame.Color(9, 152, 184), (23, 25), 25, 3)
         self.start = start
         self.target = target
         self.f_tick = TICK    # Тик когда произошёл выстрел
